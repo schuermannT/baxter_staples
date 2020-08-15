@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-import argparse
 import struct
 import sys
 import time
@@ -114,7 +113,7 @@ class Arm(object):
             self._gripper.set_vacuum_threshold(1.0)
         if self._gripper._type is 'electric':
             self._gripper.set_moving_force(100.0) 
-        self._limb.set_joint_position_speed(0.3)     
+        self._limb.set_joint_position_speed(0.3)    
         
         if self._limb_name is 'left': 
             print("Getting robot state...")
@@ -176,7 +175,7 @@ class Arm(object):
             self._gripper.open()
         self._current_pose = convert_to_pose(self._limb.endpoint_pose())
 
-    def pick(self, pick_pose, remove_staple=False, opening=0, hover_distance=0.1):
+    def pick(self, pick_pose, remove_staple=False, remove_clip=False, opening=0, hover_distance=0.1):
         if self._verbose: 
             print "--- func: pick ---"
             print "--- given pose: ---"
@@ -187,6 +186,7 @@ class Arm(object):
             if self._verbose:
                 print "moving to hover pose..."
             self.move_to_solution()
+            time.sleep(1)   #to prevent from further movement before reaching final position
         else:
             return False
         #pick point
@@ -195,6 +195,7 @@ class Arm(object):
                 print "approaching target..."
             self._limb.set_joint_position_speed(0.15)
             self.move_to_solution()
+            print "------------> pick_pose: {}".format(self._limb.endpoint_pose())
         else: 
             return False
         #close gripper
@@ -203,6 +204,7 @@ class Arm(object):
             time.sleep(1)
             if remove_staple:
                 self._gripper.command_position(position=const_lib.gripper_opening)
+                time.sleep(1)
             elif self._gripper.missed():
                 print "Gripping with {}_arm failed".format(self._limb_name)
                 return False
@@ -210,6 +212,14 @@ class Arm(object):
             self._gripper.close(timeout = 1.0)
         else:
             print "\nCustom gripper type detected. Please change the grippers to the required hardware.\nRequired gripper hardware:\nLeft: Electric\nRight: Suction"
+        #remove clip
+        if remove_clip:
+            if self.get_solution(alter_pose_inc(pick_pose, verbose=self._verbose, posx=-0.04)):
+                if self._verbose:
+                    print "removing clip..."
+                self.move_to_solution()
+            else:
+                return False
         #retreat
         if self.get_solution(hover_pose):
             if self._verbose:
@@ -245,6 +255,8 @@ class Arm(object):
                 print "approaching target..."
             self._limb.set_joint_position_speed(0.15)
             self.move_to_solution()
+            time.sleep(1)
+            print "------------> place_pose: {}".format(self._limb.endpoint_pose())
             #open gripper
             if opening is 0:
                 opening=100
@@ -299,6 +311,7 @@ class Arm(object):
                 print "approaching target..."
             self._limb.set_joint_position_speed(0.15)
             self.move_to_solution()
+            print "------------> place_paper_pose: {}".format(self._limb.endpoint_pose())
             #open gripper
             self._gripper.open()
         else: 
@@ -326,85 +339,9 @@ class Arm(object):
     def store_tool(self):
         self._gripper.command_position(const_lib.gripper_opening)
         tool_pose = convert_to_pose(const_lib.tool_pose)
-        alter_pose_inc(tool_pose, verbose=self._verbose, posx=-0.002, posz=0.03)
+        alter_pose_inc(tool_pose, verbose=self._verbose, posx=-0.002, posy=-0.002, posz=0.03)
         if not self.place(tool_pose, hover_distance=const_lib.hover_distance['tool']):
             print "Couldn't store tool"
             return False
         self.set_neutral()
         return True
-
-
-def main():
-    try:
-        # Argument Parsing
-        arg_fmt = argparse.RawDescriptionHelpFormatter
-        parser = argparse.ArgumentParser(formatter_class=arg_fmt, description=main.__doc__)
-
-        parser.add_argument(
-            '-v', '--verbose',
-            action='store_const',
-            const=True,
-            default=False,
-            help="displays debug information (default = False)"
-        )
-        args = parser.parse_args(rospy.myargv()[1:])
-
-        # Init
-        rospy.init_node("ik_move", anonymous=True)
-        time.sleep(0.5)
-        print "--- Ctrl-D stops the program ---"
-        print "Init started..."
-        left = Arm("left", args.verbose)
-        right = Arm("right", args.verbose)
-        print "Init finished..."
-
-        #Movement            
-        print "---> Both: Moving to neutral position... <---"
-        left.set_neutral()
-        right.set_neutral()
-
-        print "---> Left: Pick Tool... <---"
-        if not left.take_tool():
-            failsafe(left, right)
-            return False
-
-        for x in range(0, 5):
-            print "---> Right: Pick Paper... <---"
-            if not right.pick(convert_to_pose(const_lib.pick_paper_pose), hover_distance=const_lib.hover_distance['paper']):
-                failsafe(left, right, True)
-                return False
-
-            print "---> Right: Place Paper... <---"
-            if not right.place_paper():
-                failsafe(left, right, True)
-                return False
-            
-            print "---> Right: Moving to neutral position... <---"
-            right.set_neutral()
-
-            print "---> Left: Removing Staple... <---"
-            if not left.pick(convert_to_pose(const_lib.staple_pose), remove_staple=True, hover_distance=const_lib.hover_distance['tool']):
-                failsafe(left, right, True)
-                return False
-
-            print "---> Left: Moving to neutral position... <---"
-            left.set_neutral(False)
-
-        print "---> Left: Storing Tool... <---"
-        if not left.store_tool():
-            failsafe(left, right)
-            return False
-
-        print "---> Ending with neutral position... <---"
-        left.set_neutral()
-        right.set_neutral()
-        left._rs.disable()
-              
-        print "exec finished."
-    except rospy.ROSInterruptException as e:
-        return e
-    except KeyboardInterrupt as e:
-        return e
-
-if __name__ == '__main__':
-    main()

@@ -7,6 +7,7 @@ import sys
 import time
 
 import const_lib
+import camtest
 
 import rospy
 import baxter_interface
@@ -114,7 +115,7 @@ class Arm(object):
             self._gripper.set_vacuum_threshold(1.0)
         if self._gripper._type is 'electric':
             self._gripper.set_moving_force(100.0) 
-        self._limb.set_joint_position_speed(0.3)     
+        self._limb.set_joint_position_speed(0.3)    
         
         if self._limb_name is 'left': 
             print("Getting robot state...")
@@ -187,6 +188,7 @@ class Arm(object):
             if self._verbose:
                 print "moving to hover pose..."
             self.move_to_solution()
+            time.sleep(1)   #to prevent from further movement before reaching final position
         else:
             return False
         #pick point
@@ -204,6 +206,7 @@ class Arm(object):
             time.sleep(1)
             if remove_staple:
                 self._gripper.command_position(position=const_lib.gripper_opening)
+                time.sleep(1)
             elif self._gripper.missed():
                 print "Gripping with {}_arm failed".format(self._limb_name)
                 return False
