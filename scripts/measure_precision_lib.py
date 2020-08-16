@@ -9,7 +9,7 @@ from geometry_msgs.msg import (
     Quaternion
 )
 
-start_poses = {
+middle_pose = {
                 'left': PoseStamped(
                     pose=Pose(
                         position=Point(
