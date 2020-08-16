@@ -115,18 +115,17 @@ class Arm(object):
             self._gripper.set_moving_force(100.0) 
         self._limb.set_joint_position_speed(0.3)    
         
-        if self._limb_name is 'left': 
-            print("Getting robot state...")
-            self._rs = baxter_interface.RobotEnable(baxter_interface.CHECK_VERSION)
-            self._init_state = self._rs.state().enabled
-            if not self._init_state:
-                print("Enabling robot...")
-                self._rs.enable()
-            else:
-                print("Robot already enabled...")
-            if not self._gripper.calibrated():
-                print("Calibrating left gripper...")
-                self._gripper.calibrate()
+        print("Getting robot state...")
+        self._rs = baxter_interface.RobotEnable(baxter_interface.CHECK_VERSION)
+        self._init_state = self._rs.state().enabled
+        if not self._init_state:
+            print("Enabling robot...")
+            self._rs.enable()
+        else:
+            print("Robot already enabled...")
+        if self._gripper._type is 'electric' and not self._gripper.calibrated():
+            print("Calibrating electric gripper...")
+            self._gripper.calibrate()
 
     def get_solution(self, pose):
         if self._verbose: 
@@ -345,3 +344,8 @@ class Arm(object):
             return False
         self.set_neutral()
         return True
+
+    def simple_failsafe(self):
+        print "Exit routine started \nShutting down arm in neutral pose"
+        self.set_neutral()
+        self._rs.disable()
