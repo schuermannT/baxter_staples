@@ -10,7 +10,7 @@ import rospy
 import csv
 
 import measure_precision_lib
-import class_arm
+import arm_class
 
 from geometry_msgs.msg import (
     PoseStamped,
@@ -45,10 +45,10 @@ def main():
         time.sleep(0.5)
         print("--- Ctrl-D stops the program ---")
         print("Init started...")
-        arm = class_arm.Arm(args.limb, args.verbose)
+        arm = arm_class.Arm(args.limb, args.verbose)
         print("Init finished...")
 
-        #print(class_arm.convert_to_pose(arm._limb.endpoint_pose()))
+        #print(arm_class.convert_to_pose(arm._limb.endpoint_pose()))
 
         #Move to neutral Pose
         arm.set_neutral()
@@ -56,36 +56,6 @@ def main():
         #Measurements
         print("Starting measurements...")
             #Positive X
-        print("--- {} arm: Positive X").format(arm._limb_name)
-        filename = '{}_positive_x.csv'.format(arm._limb_name)
-        with open(filename, "w", newline="") as csv_file:
-            header = ['Pose', 'Soll', 'Ist', 'Difference']
-            writer = csv.writer(csv_file, dialect='excel')
-            writer.writerow(header)
-                #Initial Pose
-            if arm.get_solution(class_arm.alter_pose_inc(measure_precision_lib.start_poses[arm._limb_name].pose, arm._verbose, posx=-0.35)):
-                arm.move_to_solution()
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.get_solution(measure_precision_lib.start_poses[arm._limb_name].pose):
-                arm.move_to_solution()
-            else:
-                arm.simple_failsafe()
-                return False
-            print("--->Reached: initial pose\nStarting Measurements...")
-                #Measurements
-            for x in range(2, 12):
-                next_pose = class_arm.alter_pose_inc(measure_precision_lib.start_poses[arm._limb_name], arm._verbose, posx=x*0.05)
-                if arm.get_solution(next_pose):
-                    arm.move_to_solution()
-                else:
-                    arm.simple_failsafe()
-                    return False
-                print("Reached: {}").format((int) (x-1))
-                writer.writerow([x-1, next_pose.position.x, arm._current_pose.position.x, (arm._current_pose.position.x - next_pose.position.x)])
-        print("Finished: {} arm: Positive X").format(arm._limb_name)
-            #Negative X
         print("--- {} arm: Negative X").format(arm._limb_name)
         filename = '{}_negative_x.csv'.format(arm._limb_name)
         with open(filename, "w", newline="") as csv_file:
@@ -93,27 +63,27 @@ def main():
             writer = csv.writer(csv_file, dialect='excel')
             writer.writerow(header)
                 #Initial Pose
-            if arm.get_solution(class_arm.alter_pose_inc(measure_precision_lib.start_poses[arm._limb_name].pose, arm._verbose, posx=0.35)):
+            if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.2)):
                 arm.move_to_solution()
             else:
                 arm.simple_failsafe()
                 return False
-            if arm.get_solution(measure_precision_lib.start_poses[arm._limb_name].pose):
+            if arm.get_solution(arm_class):
                 arm.move_to_solution()
             else:
                 arm.simple_failsafe()
                 return False
             print("--->Reached: initial pose\nStarting Measurements...")
                 #Measurements
-            for x in range(2, 12):
-                next_pose = class_arm.alter_pose_inc(measure_precision_lib.start_poses[arm._limb_name], arm._verbose, posx=x*(-0.05))
+            for x in range(0.02, 0.22, 0.02):
+                next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.1))
                 if arm.get_solution(next_pose):
                     arm.move_to_solution()
                 else:
                     arm.simple_failsafe()
                     return False
-                print("Reached: {}").format((int) (x-1))
-                writer.writerow([x-1, next_pose.position.x, arm._current_pose.position.x, (arm._current_pose.position.x - next_pose.position.x)])
+                print("Reached: {}").format((int) (x*5))
+                writer.writerow([x*5, next_pose.position.x, arm._current_pose.position.x, (arm._current_pose.position.x - next_pose.position.x)])
         print("Finished: {} arm: negative X").format(arm._limb_name)
 
 
