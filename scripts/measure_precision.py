@@ -19,6 +19,37 @@ from geometry_msgs.msg import (
     Quaternion
 )
 
+def positive_x(self, arm):
+    print("--- {} arm: Negative X").format(arm._limb_name)
+    filename = '{}_positive_x.csv'.format(arm._limb_name)
+    with open(filename, "w", newline="") as csv_file:
+        header = ['Pose', 'Soll', 'Ist', 'Difference']
+        writer = csv.writer(csv_file, dialect='excel')
+        writer.writerow(header)
+            #Initial Pose
+        if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.2)): #approach starting point with minimal joint play
+            arm.move_to_solution()
+        else:
+            arm.simple_failsafe()
+            return False
+        if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, verbose=arm._verbose, posx=-0.1)):
+            arm.move_to_solution()
+        else:
+            arm.simple_failsafe()
+            return False
+        print("--->Reached: initial pose\nStarting Measurements...")
+            #Measuring
+        for x in range(0.02, 0.22, 0.02):
+            next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.1))
+            if arm.get_solution(next_pose):
+                arm.move_to_solution()
+            else:
+                arm.simple_failsafe()
+                return False
+            print("Reached Pose {}").format((int) (x*5))
+            writer.writerow([x*5, next_pose.position.x, arm._current_pose.position.x, (arm._current_pose.position.x - next_pose.position.x)])
+        print("Finished: {} arm: positive X").format(arm._limb_name)
+
 def main():
     try:
         # Argument Parsing
@@ -56,36 +87,8 @@ def main():
         #Measurements
         print("Starting measurements...")
             #Positive X
-        print("--- {} arm: Negative X").format(arm._limb_name)
-        filename = '{}_negative_x.csv'.format(arm._limb_name)
-        with open(filename, "w", newline="") as csv_file:
-            header = ['Pose', 'Soll', 'Ist', 'Difference']
-            writer = csv.writer(csv_file, dialect='excel')
-            writer.writerow(header)
-                #Initial Pose
-            if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.2)):
-                arm.move_to_solution()
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.get_solution(arm_class):
-                arm.move_to_solution()
-            else:
-                arm.simple_failsafe()
-                return False
-            print("--->Reached: initial pose\nStarting Measurements...")
-                #Measurements
-            for x in range(0.02, 0.22, 0.02):
-                next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.1))
-                if arm.get_solution(next_pose):
-                    arm.move_to_solution()
-                else:
-                    arm.simple_failsafe()
-                    return False
-                print("Reached: {}").format((int) (x*5))
-                writer.writerow([x*5, next_pose.position.x, arm._current_pose.position.x, (arm._current_pose.position.x - next_pose.position.x)])
-        print("Finished: {} arm: negative X").format(arm._limb_name)
-
+        if not positive_x(arm):
+            return False
 
 
     except rospy.ROSInterruptException as e:
