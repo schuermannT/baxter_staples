@@ -61,14 +61,14 @@ class Arm(object):
         if self._verbose: 
             print("--- func: get_solution ---")
             print("--- pose: ---")
-            print pose
+            print(pose)
             print("------------------------")
         del self._ikreq.pose_stamp[:]
         self._ikreq.pose_stamp.append(PoseStamped(header=self._hdr, pose=pose))
         try:
             rospy.wait_for_service(self._ns, 5.0)
             resp = self._iksvc(self._ikreq)
-        except (rospy.ServiceException, rospy.ROSException), e:
+        except (rospy.ServiceException, rospy.ROSException) as e:
             rospy.logerr("Service call failed: %s" %(e,))
             return 0
 
@@ -116,20 +116,20 @@ class Arm(object):
         ik_pose.orientation.z = current_pose['orientation'].z 
         ik_pose.orientation.w = current_pose['orientation'].w
         if self._verbose: 
-            print "--- func: get_current_pose ---"
-            print "--- limb: {}_arm ---".format(self._limb_name)
-            print "--- pose: ---"
-            print ik_pose
-            print "------------------------"
+            print("--- func: get_current_pose ---")
+            print("--- limb: {}_arm ---").format(self._limb_name)
+            print("--- pose: ---")
+            print(ik_pose)
+            print("------------------------")
         return ik_pose
 
     def alter_pose_inc(self, pose, posx = 0.0, posy = 0.0, posz = 0.0, orx = 0.0, ory = 0.0, orz = 0.0, orw = 0.0):
         """changes the current pose with the given modifiers. the modifiers are defaulted to 0"""
         if self._verbose:
-            print "--- func: alter_pose_inc ---"
-            print "posx={} posy={} posz={} orx={} ory={} orz={} orw={}".format(posx, posy, posz, orx, ory, orz, orw) 
-            print "--- given pose: ---"
-            print pose
+            print("--- func: alter_pose_inc ---")
+            print("posx={} posy={} posz={} orx={} ory={} orz={} orw={}").format(posx, posy, posz, orx, ory, orz, orw) 
+            print("--- given pose: ---")
+            print(pose)
         pose.position.x += posx 
         pose.position.y += posy
         pose.position.z += posz
@@ -138,16 +138,16 @@ class Arm(object):
         pose.orientation.z += orz
         pose.orientation.w += orw
         if self._verbose:
-            print "--- new pose: ---"
-            print pose
-            print "------------------------"
+            print("--- new pose: ---")
+            print(pose)
+            print("------------------------")
         return pose
     
     def alter_pose_abs(self, pose, posx = None, posy = None, posz = None, orx = None, ory = None, orz = None, orw = None):
         """changes the current pose with the given absolute values. the parameters are defaulted to self._current_pose"""
         if self._verbose:
-            print "--- func: alter_pose_abs ---"
-            print "posx={} posy={} posz={} orx={} ory={} orz={} orw={}".format(posx, posy, posz, orx, ory, orz, orw)
+            print("--- func: alter_pose_abs ---")
+            print("posx={} posy={} posz={} orx={} ory={} orz={} orw={}").format(posx, posy, posz, orx, ory, orz, orw)
         if posx is None: posx = pose.position.x
         if posy is None: posy = pose.position.y
         if posz is None: posz = pose.position.z
@@ -156,8 +156,8 @@ class Arm(object):
         if orz is None: orz = pose.orientation.z
         if orw is None: orw = pose.orientation.w
         if self._verbose: 
-            print "--- given pose: ---"
-            print pose
+            print("--- given pose: ---")
+            print(pose)
         pose.position.x = posx
         pose.position.y = posy
         pose.position.z = posz
@@ -166,19 +166,19 @@ class Arm(object):
         pose.orientation.z = orz
         pose.orientation.w = orw
         if self._verbose:
-            print "--- new pose: ---"
-            print pose
-            print "------------------------"
+            print("--- new pose: ---")
+            print(pose)
+            print("------------------------")
         return pose
 
     def make_at_pose(self, pose, cmd, opening = 0):
         """approaches target in a safe way, fulfills cmd and retreats"""
         """commands: pick, place"""
         if self._verbose: 
-            print "--- func: make_at_pose ---"
-            print "cmd={}".format(cmd)
-            print "--- given pose: ---"
-            print pose
+            print("--- func: make_at_pose ---")
+            print("cmd={}").format(cmd)
+            print("--- given pose: ---")
+            print(pose)
         make_pose = pose
         safe_pose = self.alter_pose_inc(deepcopy(pose), posz = self._hover_distance)
 
@@ -186,13 +186,13 @@ class Arm(object):
             #hover point
             if self.get_solution(safe_pose):
                 if self._verbose:
-                    print "moving to hover pose..."
+                    print("moving to hover pose...")
                 self.move_to_solution()
             else:
                 return False
             if self.get_solution(make_pose):
                 if self._verbose:
-                    print "approaching target..."
+                    print("approaching target...")
                 self._limb.set_joint_position_speed(0.15)
                 self.move_to_solution()
             else: 
@@ -200,17 +200,17 @@ class Arm(object):
             if self._gripper._type is 'electric':
                 self._gripper.command_position(position=opening)
                 if self._gripper.missed():
-                    print "Gripping with {}_arm failed".format(self._limb_name)
+                    print("Gripping with {}_arm failed").format(self._limb_name)
                     return False
             elif self._gripper._type is 'suction':
                 self._gripper.close(timeout = 1.0)
             else:
-                print "\nCustom gripper type detected. Please change the grippers to the required hardware.\nRequired gripper hardware:\nLeft: Electric\nRight: Suction"
+                print("\nCustom gripper type detected. Please change the grippers to the required hardware.\nRequired gripper hardware:\nLeft: Electric\nRight: Suction")
         elif cmd is 'place':
             drag_paper_pose = self.alter_pose_inc(deepcopy(safe_pose), posx=0.28, posy=0.02, posz=0.28, orx=90.0)
             if self.get_solution(drag_paper_pose):
                 if self._verbose:
-                    print "moving to hover pose..."
+                    print("moving to hover pose...")
                 self.move_to_solution()
             else: 
                 return False
@@ -218,21 +218,21 @@ class Arm(object):
             self.alter_pose_inc(drag_paper_pose, posx=-0.02)
             if self.get_solution(drag_paper_pose):
                 if self._verbose:
-                    print "lowering paper..."
+                    print("lowering paper...")
                 self.move_to_solution()
             else: 
                 return False
             self.alter_pose_inc(make_pose, posz=0.01)
             if self.get_solution(drag_paper_pose):
                 if self._verbose:
-                    print "dragging paper..."
+                    print("dragging paper...")
                 self.move_to_solution()
             else: 
                 return False 
             self.alter_pose_inc(make_pose, posy=-0.005, posz=-0.01)
             if self.get_solution(make_pose):
                 if self._verbose:
-                    print "approaching target..."
+                    print("approaching target...")
                 self.move_to_solution()
                 self._gripper.open()
             else: 
@@ -240,12 +240,12 @@ class Arm(object):
         #retreat
         if self.get_solution(safe_pose):
             if self._verbose:
-                print "retreating to safe position..."
+                print("retreating to safe position...")
             self.move_to_solution()
             if self._gripper._type is 'suction':
-                print "----> suction: {}".format(self._gripper.vacuum_sensor())
+                print("----> suction: {}").format(self._gripper.vacuum_sensor())
                 if not self._gripper.vacuum_sensor() > 8.0:
-                        print "Gripping with {}_arm failed\nSuction: {}".format(self._limb_name, self._gripper.vacuum_sensor())
+                        print("Gripping with {}_arm failed\nSuction: {}").format(self._limb_name, self._gripper.vacuum_sensor())
                         return False
             self._limb.set_joint_position_speed(0.3)
             return True
@@ -274,20 +274,20 @@ def main():
         # Init
         rospy.init_node("ik_move", anonymous=True)
         time.sleep(0.5)
-        print "--- Ctrl-D stops the program ---"
-        print "Init started..."
+        print("--- Ctrl-D stops the program ---")
+        print("Init started...")
         left = Arm("left", args.verbose)
         right = Arm("right", args.verbose)
-        print "Init finished..."
+        print("Init finished...")
 
         #Movement
             
-        print "---> Both: Moving to neutral position... <---"
+        print("---> Both: Moving to neutral position... <---")
         left.set_neutral()
         right.set_neutral()
 
         
-        print "---> Right: Pick Paper... <---"
+        print("---> Right: Pick Paper... <---")
         make_pose = deepcopy(right._current_pose)
         #right.alter_pose_abs(make_pose, posx=0.5, posy = 0.0, posz = poses.table_height, orx=0.0, orz=0.0, orw=0.0)
         right.alter_pose_abs(make_pose, posy = -0.15, posz = poses.table_height, orx=0.0, orz=0.0, orw=0.0)
@@ -298,7 +298,7 @@ def main():
             left._rs.disable()
             return False
 
-        print "---> Right: Place Paper... <---"
+        print("---> Right: Place Paper... <---")
         right.alter_pose_abs(make_pose, posx=0.422, posy=0.137, orx=90)
         if not right.make_at_pose(make_pose, 'place'):
             left.set_neutral()
@@ -306,17 +306,17 @@ def main():
             left._rs.disable()
             return False
         
-        print "---> Right: Moving to neutral position... <---"
+        print("---> Right: Moving to neutral position... <---")
         right.set_neutral()
 
         
 
-        print "---> Ending with neutral position... <---"
+        print("---> Ending with neutral position... <---")
         left.set_neutral()
         right.set_neutral()
         left._rs.disable()
               
-        print "exec finished."
+        print("exec finished.")
     except rospy.ROSInterruptException as e:
         return e
     except KeyboardInterrupt as e:

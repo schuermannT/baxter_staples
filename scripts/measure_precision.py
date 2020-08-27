@@ -19,36 +19,147 @@ from geometry_msgs.msg import (
     Quaternion
 )
 
-def positive_x(self, arm):
-    print("--- {} arm: Negative X").format(arm._limb_name)
-    filename = '{}_positive_x.csv'.format(arm._limb_name)
-    with open(filename, "w", newline="") as csv_file:
-        header = ['Pose', 'Soll', 'Ist', 'Difference']
-        writer = csv.writer(csv_file, dialect='excel')
-        writer.writerow(header)
-            #Initial Pose
-        if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.2)): #approach starting point with minimal joint play
+
+def positive_x(self, arm, iterations):
+    print("--- {} arm: positive x").format(arm._limb_name)    
+    input("Press Enter to start...")
+    #Initial Pose
+    if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.2)): #approach starting point with minimal joint play
+        arm.move_to_solution()
+    else:
+        arm.simple_failsafe()
+        return False
+    if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, verbose=arm._verbose, posx=-0.1)):
+        arm.move_to_solution()
+    else:
+        arm.simple_failsafe()
+        return False
+    print("--->Reached: initial pose\nStarting Measurements...")
+    #Readings: ['posenumber', 'setpoint', 'actual', 'difference in x', 'difference in y']
+    #Measuring
+    for x in range(1, iterations+1):
+        next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-(x*0.02)))
+        if arm.get_solution(next_pose):
             arm.move_to_solution()
         else:
             arm.simple_failsafe()
             return False
-        if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, verbose=arm._verbose, posx=-0.1)):
+        print("Reached Pose {}").format((int) (x))
+        setpoint[x-1] = next_pose.position.x
+        actual[x-1] = arm._current_pose.position.x
+        x_diff[x-1] = arm._current_pose.position.x - next_pose.position.x
+        y_diff[x-1] = arm._current_pose.position.y - next_pose.position.y
+    print("Finished: {} arm: positive x").format(arm._limb_name)
+    print("Data following:\n")
+    for it in range(iterations):
+        print("{},{},{},{},{}").format(it+1, setpoint[it], actual[it], x_diff[it], y_diff[it])
+    print("")
+
+def negative_x(self, arm, iterations):
+    print("--- {} arm: negative x").format(arm._limb_name)    
+    input("Press Enter to start...")
+    #Initial Pose
+    if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=0.2)): #approach starting point with minimal joint play
+        arm.move_to_solution()
+    else:
+        arm.simple_failsafe()
+        return False
+    if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, verbose=arm._verbose, posx=0.1)):
+        arm.move_to_solution()
+    else:
+        arm.simple_failsafe()
+        return False
+    print("--->Reached: initial pose\nStarting Measurements...")
+    #Readings: ['posenumber', 'setpoint', 'actual', 'difference in x', 'difference in y']
+    #Measuring
+    for x in range(1, iterations+1):
+        next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=x*0.02))
+        if arm.get_solution(next_pose):
             arm.move_to_solution()
         else:
             arm.simple_failsafe()
             return False
-        print("--->Reached: initial pose\nStarting Measurements...")
-            #Measuring
-        for x in range(0.02, 0.22, 0.02):
-            next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posx=-0.1))
-            if arm.get_solution(next_pose):
-                arm.move_to_solution()
-            else:
-                arm.simple_failsafe()
-                return False
-            print("Reached Pose {}").format((int) (x*5))
-            writer.writerow([x*5, next_pose.position.x, arm._current_pose.position.x, (arm._current_pose.position.x - next_pose.position.x)])
-        print("Finished: {} arm: positive X").format(arm._limb_name)
+        print("Reached Pose {}").format((int) (x))
+        setpoint[x-1] = next_pose.position.x
+        actual[x-1] = arm._current_pose.position.x
+        x_diff[x-1] = arm._current_pose.position.x - next_pose.position.x
+        y_diff[x-1] = arm._current_pose.position.y - next_pose.position.y
+    print("Finished: {} arm: negative x").format(arm._limb_name)
+    print("Data following:\n")
+    for it in range(iterations):
+        print("{},{},{},{},{}").format(it+1, setpoint[it], actual[it], x_diff[it], y_diff[it])
+    print("")
+
+def positive_y(self, arm, iterations):
+    print("--- {} arm: positive y").format(arm._limb_name)    
+    input("Press Enter to start...")
+    #Initial Pose
+    if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posy=-0.2)): #approach starting point with minimal joint play
+        arm.move_to_solution()
+    else:
+        arm.simple_failsafe()
+        return False
+    if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, verbose=arm._verbose, posy=-0.1)):
+        arm.move_to_solution()
+    else:
+        arm.simple_failsafe()
+        return False
+    print("--->Reached: initial pose\nStarting Measurements...")
+    #Readings: ['posenumber', 'setpoint', 'actual', 'difference in y', 'difference in x']
+    #Measuring
+    for x in range(1, iterations+1):
+        next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posy=-(x*0.02)))
+        if arm.get_solution(next_pose):
+            arm.move_to_solution()
+        else:
+            arm.simple_failsafe()
+            return False
+        print("Reached Pose {}").format((int) (x))
+        setpoint[x-1] = next_pose.position.y
+        actual[x-1] = arm._current_pose.position.y
+        x_diff[x-1] = arm._current_pose.position.x - next_pose.position.x
+        y_diff[x-1] = arm._current_pose.position.y - next_pose.position.y
+    print("Finished: {} arm: positive y").format(arm._limb_name)
+    print("Data following:\n")
+    for it in range(iterations):
+        print("{},{},{},{},{}").format(it+1, setpoint[it], actual[it], y_diff[it], x_diff[it])
+    print("")
+
+def negative_y(self, arm, iterations):
+    print("--- {} arm: negative y").format(arm._limb_name)    
+    input("Press Enter to start...")
+    #Initial Pose
+    if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posy=0.2)): #approach starting point with minimal joint play
+        arm.move_to_solution()
+    else:
+        arm.simple_failsafe()
+        return False
+    if arm.get_solution(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, verbose=arm._verbose, posy=0.1)):
+        arm.move_to_solution()
+    else:
+        arm.simple_failsafe()
+        return False
+    print("--->Reached: initial pose\nStarting Measurements...")
+    #Readings: ['posenumber', 'setpoint', 'actual', 'difference in y', 'difference in x']
+    #Measuring
+    for x in range(1, iterations+1):
+        next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(measure_precision_lib.middle_pose[arm._limb_name].pose, arm._verbose, posy=x*0.02))
+        if arm.get_solution(next_pose):
+            arm.move_to_solution()
+        else:
+            arm.simple_failsafe()
+            return False
+        print("Reached Pose {}").format((int) (x))
+        setpoint[x-1] = next_pose.position.y
+        actual[x-1] = arm._current_pose.position.y
+        x_diff[x-1] = arm._current_pose.position.x - next_pose.position.x
+        y_diff[x-1] = arm._current_pose.position.y - next_pose.position.y
+    print("Finished: {} arm: negative y").format(arm._limb_name)
+    print("Data following:\n")
+    for it in range(iterations):
+        print("{},{},{},{},{}").format(it+1, setpoint[it], actual[it], y_diff[it], x_diff[it])
+    print("")
+    
 
 def main():
     try:
@@ -86,10 +197,18 @@ def main():
 
         #Measurements
         print("Starting measurements...")
+        iterations = 10
             #Positive X
-        if not positive_x(arm):
+        if not positive_x(arm, iterations):
+            return False
+        if not negative_x(arm, iterations):
+            return False
+        if not positive_y(arm, iterations):
+            return False
+        if not negative_y(arm, iterations):
             return False
 
+        print("\nMeasurements finished...\nExiting program...")
 
     except rospy.ROSInterruptException as e:
         return e
