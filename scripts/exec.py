@@ -11,7 +11,6 @@ import camtest
 
 import rospy
 import baxter_interface
-from baxter_interface import CHECK_VERSION
 
 from copy import deepcopy
 
