@@ -13,8 +13,8 @@ middle_pose = {
                 'left': PoseStamped(
                     pose=Pose(
                         position=Point(
-                            x=0.405,
-                            y=0.108,
+                            x=0.650,
+                            y=0.300,
                             z=0.000,
                         ),
                         orientation=Quaternion(
@@ -29,7 +29,7 @@ middle_pose = {
                     pose=Pose(
                         position=Point(
                             x=0.650,
-                            y=-0.30,
+                            y=-0.300,
                             z=0.000,
                         ),
                         orientation=Quaternion(

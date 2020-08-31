@@ -150,7 +150,8 @@ class Arm(object):
                 self._ikreq.SEED_CURRENT: 'Current Joint Angles',
                 self._ikreq.SEED_NS_MAP : 'Nullspace Setpoints',
             }.get(resp_seeds[0], 'None')
-            print("SUCCESS - Valid Joint Solution Found from Seed Type: %s" % (seed_str,))
+            if self._verbose:
+                print("SUCCESS - Valid Joint Solution Found from Seed Type: %s" % (seed_str,))
             #Format solution into Limb API-compatible dictionary
             self._ik_solution = dict(zip(resp.joints[0].name, resp.joints[0].position))
             if self._verbose:

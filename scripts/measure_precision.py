@@ -235,6 +235,7 @@ def main():
 
         print("\nMeasurements finished...\nExiting program...")
         arm.set_neutral()
+        arm._rs.disable()
 
     except rospy.ROSInterruptException as e:
         return e
