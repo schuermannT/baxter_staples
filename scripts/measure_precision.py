@@ -100,7 +100,7 @@ def negative_x(arm, rounds):
         print("Finished: {} arm: negative x").format(arm._limb_name)
         print("Data following:\n")
         for step_counter in range(10):
-            print("{},{},{},{},{}").format(step_counter+1+round_counter, setpoint[step_counter], actual[step_counter], x_diff[step_counter], y_diff[step_counter])
+            print("{},{},{},{},{}").format(step_counter+1+(round_counter*10), setpoint[step_counter], actual[step_counter], x_diff[step_counter], y_diff[step_counter])
         print("")
     return True
 
@@ -142,7 +142,7 @@ def positive_y(arm, rounds):
         print("Finished: {} arm: positive y").format(arm._limb_name)
         print("Data following:\n")
         for step_counter in range(10):
-            print("{},{},{},{},{}").format(step_counter+1+round_counter, setpoint[step_counter], actual[step_counter], y_diff[step_counter], x_diff[step_counter])
+            print("{},{},{},{},{}").format(step_counter+1+(round_counter*10), setpoint[step_counter], actual[step_counter], y_diff[step_counter], x_diff[step_counter])
         print("")
     return True
 
@@ -184,7 +184,7 @@ def negative_y(arm, rounds):
         print("Finished: {} arm: negative y").format(arm._limb_name)
         print("Data following:\n")
         for step_counter in range(10):
-            print("{},{},{},{},{}").format(step_counter+1+round_counter, setpoint[step_counter], actual[step_counter], y_diff[step_counter], x_diff[step_counter])
+            print("{},{},{},{},{}").format(step_counter+1+(round_counter*10), setpoint[step_counter], actual[step_counter], y_diff[step_counter], x_diff[step_counter])
         print("")
     return True
     

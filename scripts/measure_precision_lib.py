@@ -13,7 +13,7 @@ middle_pose = {
                 'left': PoseStamped(
                     pose=Pose(
                         position=Point(
-                            x=0.650,
+                            x=0.660,
                             y=0.300,
                             z=0.000,
                         ),
@@ -28,7 +28,7 @@ middle_pose = {
                 'right': PoseStamped(
                     pose=Pose(
                         position=Point(
-                            x=0.650,
+                            x=0.660,
                             y=-0.300,
                             z=0.000,
                         ),
