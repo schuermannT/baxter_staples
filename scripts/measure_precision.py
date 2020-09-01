@@ -56,7 +56,7 @@ def positive_x(arm, rounds):
             x_diff.append(arm._current_pose.position.x - next_pose.position.x)
             y_diff.append(arm._current_pose.position.y - next_pose.position.y)
         print("Finished: {} arm: positive x").format(arm._limb_name)
-        print("Data following:\n")
+        print("Data following: round {}\n").format(round_counter)
         for step_counter in range(10):
             print("{},{},{},{},{}").format(step_counter+1, setpoint[step_counter], actual[step_counter], x_diff[step_counter], y_diff[step_counter])
         print("")
@@ -98,7 +98,7 @@ def negative_x(arm, rounds):
             x_diff.append(arm._current_pose.position.x - next_pose.position.x)
             y_diff.append(arm._current_pose.position.y - next_pose.position.y)
         print("Finished: {} arm: negative x").format(arm._limb_name)
-        print("Data following:\n")
+        print("Data following: round {}\n").format(round_counter)
         for step_counter in range(10):
             print("{},{},{},{},{}").format(step_counter+1, setpoint[step_counter], actual[step_counter], x_diff[step_counter], y_diff[step_counter])
         print("")
@@ -140,7 +140,7 @@ def positive_y(arm, rounds):
             x_diff.append(arm._current_pose.position.x - next_pose.position.x)
             y_diff.append(arm._current_pose.position.y - next_pose.position.y)
         print("Finished: {} arm: positive y").format(arm._limb_name)
-        print("Data following:\n")
+        print("Data following: round {}\n").format(round_counter)
         for step_counter in range(10):
             print("{},{},{},{},{}").format(step_counter+1, setpoint[step_counter], actual[step_counter], y_diff[step_counter], x_diff[step_counter])
         print("")
@@ -182,7 +182,7 @@ def negative_y(arm, rounds):
             x_diff.append(arm._current_pose.position.x - next_pose.position.x)
             y_diff.append(arm._current_pose.position.y - next_pose.position.y)
         print("Finished: {} arm: negative y").format(arm._limb_name)
-        print("Data following:\n")
+        print("Data following: round {}\n").format(round_counter)
         for step_counter in range(10):
             print("{},{},{},{},{}").format(step_counter+1, setpoint[step_counter], actual[step_counter], y_diff[step_counter], x_diff[step_counter])
         print("")
