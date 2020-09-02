@@ -27,7 +27,7 @@ from baxter_core_msgs.srv import (
 )
 
 def alter_pose_abs(pose, verbose=False, posx = None, posy = None, posz = None, orx = None, ory = None, orz = None, orw = None):
-        """changes the current pose with the given absolute values"""
+        """modifies the given pose with the given absolute values"""
         if verbose:
             print("--- func: alter_pose_abs ---")
             print("posx={} posy={} posz={} orx={} ory={} orz={} orw={}").format(posx, posy, posz, orx, ory, orz, orw)
@@ -55,7 +55,7 @@ def alter_pose_abs(pose, verbose=False, posx = None, posy = None, posz = None, o
         return pose
 
 def alter_pose_inc(pose, verbose=False, posx = 0.0, posy = 0.0, posz = 0.0, orx = 0.0, ory = 0.0, orz = 0.0, orw = 0.0):
-    """changes the current pose with the given modifiers. the modifiers are defaulted to 0"""
+    """modifies the current pose with the given modifiers. the modifiers are defaulted to 0"""
     if verbose:
         print("--- func: alter_pose_inc ---")
         print("posx={} posy={} posz={} orx={} ory={} orz={} orw={}").format(posx, posy, posz, orx, ory, orz, orw) 
@@ -127,6 +127,7 @@ class Arm(object):
             self._gripper.calibrate()
 
     def get_solution(self, pose):
+        """calculates a joint solution for the given pose. Needs to be called before move_to_solution()"""
         if self._verbose: 
             print("--- func: get_solution ---")
             print("--- pose: ---")
@@ -164,17 +165,20 @@ class Arm(object):
         return 0
 
     def move_to_solution(self):
+        """executes the arm movement for the calculated solution"""
         print("moving %s arm..." %self._limb_name)
         self._limb.move_to_joint_positions(self._ik_solution)
         self._current_pose = convert_to_pose(self._limb.endpoint_pose())
 
     def set_neutral(self, open_gripper=True):
+        """moves the arm into a neutral pose"""
         self._limb.move_to_neutral()
         if open_gripper:
             self._gripper.open()
         self._current_pose = convert_to_pose(self._limb.endpoint_pose())
 
     def pick(self, pick_pose, remove_staple=False, remove_clip=False, opening=0, hover_distance=0.1):
+        """approaches the given pose from a heightened pose as intermediate step and performs the gripping action in different modes"""
         if self._verbose: 
             print("--- func: pick ---")
             print("--- given pose: ---")
@@ -236,6 +240,7 @@ class Arm(object):
             return False
 
     def place(self, place_pose, opening=0, hover_distance=0.1):
+        """approaches the given pose from a heightened pose as intermediate step and opens the gripper"""
         if self._verbose: 
             print("--- func: place ---")
             print("--- given pose: ---")
@@ -273,6 +278,7 @@ class Arm(object):
             return False
 
     def place_paper(self):
+        """hardcoded way of placing a multipaged document in a way, that it gets laid down flat in the correct position"""
         if self._verbose:
             print("--- func: place_paper ---")
         place_paper_pose = convert_to_pose(const_lib.place_paper_pose)
@@ -326,6 +332,7 @@ class Arm(object):
             return False
 
     def take_tool(self):
+        """picks the tool from a hardcoded pose"""
         if not self._gripper._type is 'electric':
             print("The tool can only be used with an electric gripper\nThe currently used gripper of {}_arm is {}").format(self._limb_name, self._gripper._type)
             return False
@@ -336,6 +343,7 @@ class Arm(object):
         return True
 
     def store_tool(self):
+        """places the toll in a hardcoded pose"""
         self._gripper.command_position(const_lib.gripper_opening)
         tool_pose = convert_to_pose(const_lib.tool_pose)
         alter_pose_inc(tool_pose, verbose=self._verbose, posx=-0.002, posy=-0.002, posz=0.03)
@@ -346,6 +354,7 @@ class Arm(object):
         return True
 
     def simple_failsafe(self):
+        """moves the arm to a neutral pose and disables it. If using both arms try the global function 'failsafe'"""
         print("Exit routine started \nShutting down arm in neutral pose")
         self.set_neutral()
         self._rs.disable()

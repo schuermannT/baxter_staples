@@ -237,8 +237,7 @@ def main():
             return False
 
         print("\nMeasurements finished...\nExiting program...")
-        arm.set_neutral()
-        arm._rs.disable()
+        arm.simple_failsafe()
 
     except rospy.ROSInterruptException as e:
         return e
