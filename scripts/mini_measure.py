@@ -129,8 +129,10 @@ def main():
         fast_medium = positive_x(arm, step_width=0.02, speed=0.3)
         fast_far = positive_x(arm, step_width=0.03, speed=0.3)
 
+        print("x")
         for k in range(len(slow_short['x'])):
             print("{},{},{},{},{},{}").format(slow_short['x'][k], slow_medium['x'][k], slow_far['x'][k], fast_short['x'][k], fast_medium['x'][k], fast_far['x'][k])
+        print("y")
         for k in range(len(slow_short['y'])):
             print("{},{},{},{},{},{}").format(slow_short['y'][k], slow_medium['y'][k], slow_far['y'][k], fast_short['y'][k], fast_medium['y'][k], fast_far['y'][k])
 
