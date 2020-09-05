@@ -60,7 +60,7 @@ def positive_x(arm, step_width = 0.01, speed = 0.3):
     diff_dict = dict()
     diff_dict['x'] = list()
     diff_dict['y'] = list()
-    for round_counter in range(10):
+    for round_counter in range(20):
         #Initial Pose
         if arm.get_solution(arm_class.alter_pose_inc(deepcopy(start_pose[arm._limb_name].pose), arm._verbose, posx=(step_width * -2))): #approach starting point with minimal joint play
             arm.move_to_solution()

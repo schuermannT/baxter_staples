@@ -23,9 +23,9 @@ start_pose = {
                 'left': PoseStamped(
                     pose=Pose(
                         position=Point(
-                            x=0.660,
-                            y=0.300,
-                            z=0.000,
+                            x=0.380,
+                            y=0.100,
+                            z=-0.150,
                         ),
                         orientation=Quaternion(
                             x=-0.000,
@@ -52,12 +52,12 @@ start_pose = {
                 )
             }
 
-
-#TODO: Schrittzahl in jede Richtung auf die Schrittweite anpassen
-def positive_x(arm, step_width):
+def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
     print("--- {} arm: positive x").format(arm._limb_name)    
-    raw_input("Press Enter to start...")
+    #raw_input("Press Enter to start...")
     out_dict = dict()
+    x_steps = (int)(workspace_x/(step_width))+1
+    y_steps = (int)(workspace_y/(step_width))+1
     #Initial Pose
     if arm.get_solution(arm_class.alter_pose_inc(deepcopy(start_pose[arm._limb_name].pose), arm._verbose, posx=-(step_width*2))): #approach starting point with minimal joint play
         arm.move_to_solution()
@@ -72,10 +72,10 @@ def positive_x(arm, step_width):
         return False
     print("--->Reached: initial pose\nStarting Measurements...")
     #Measuring
-    next_pose = deepcopy(initial_pose)
-    for y_step in range(22):
-        next_pose = arm_class.alter_pose_inc(next_pose, verbose=arm._verbose, posy=step_width)
-        for x_step in range(31):
+    for y_step in range(y_steps):
+        next_pose = deepcopy(initial_pose)
+        next_pose = arm_class.alter_pose_inc(next_pose, verbose=arm._verbose, posy=step_width*(y_step+1))
+        for x_step in range(x_steps):
             next_pose = arm_class.alter_pose_inc(next_pose, verbose=arm._verbose, posx=step_width)
             if arm.get_solution(next_pose):
                 arm.move_to_solution()
@@ -133,7 +133,7 @@ def main():
 
         #Measurements
         print("Starting measurements...")
-        lut[args.limb]['x_pos'] = positive_x(arm, 0.01)
+        lut[args.limb]['x_pos'] = positive_x(arm, 0.01, workspace_x=0.297, workspace_y=0.210)
         if lut[args.limb]['x_pos'] is False:
             return False            
 
