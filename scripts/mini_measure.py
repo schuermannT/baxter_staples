@@ -7,7 +7,6 @@ import time
 
 import rospy
 
-import measure_precision_lib
 import arm_class
 
 from copy import deepcopy
@@ -57,8 +56,10 @@ start_pose = {
 def positive_x(arm, step_width = 0.01, speed = 0.3):
     print("--- {} arm: positive x").format(arm._limb_name)    
     arm._limb.set_joint_position_speed(speed)
-    raw_input("Press Enter to start...")
-    diff_list = {x = [], y = []}
+    #raw_input("Press Enter to start...")
+    diff_dict = dict()
+    diff_dict['x'] = list()
+    diff_dict['y'] = list()
     for round_counter in range(10):
         #Initial Pose
         if arm.get_solution(arm_class.alter_pose_inc(deepcopy(start_pose[arm._limb_name].pose), arm._verbose, posx=(step_width * -2))): #approach starting point with minimal joint play
@@ -80,9 +81,9 @@ def positive_x(arm, step_width = 0.01, speed = 0.3):
         else:
             arm.simple_failsafe()
             return False
-        diff_list.x.append(arm._current_pose.position.x - next_pose.position.x)
-        diff_list.y.append(arm._current_pose.position.y - next_pose.position.y)
-    return diff_list
+        diff_dict['x'].append(arm._current_pose.position.x - next_pose.position.x)
+        diff_dict['y'].append(arm._current_pose.position.y - next_pose.position.y)
+    return diff_dict
 
 def main():
     try:
@@ -128,8 +129,10 @@ def main():
         fast_medium = positive_x(arm, step_width=0.02, speed=0.3)
         fast_far = positive_x(arm, step_width=0.03, speed=0.3)
 
-        for k in range(len(slow_short)):
-            print({},{},{},{},{},{}).format(slow_short, slow_medium, slow_far, fast_short, fast_medium, fast_far)
+        for k in range(len(slow_short['x'])):
+            print("{},{},{},{},{},{}").format(slow_short['x'][k], slow_medium['x'][k], slow_far['x'][k], fast_short['x'][k], fast_medium['x'][k], fast_far['x'][k])
+        for k in range(len(slow_short['y'])):
+            print("{},{},{},{},{},{}").format(slow_short['y'][k], slow_medium['y'][k], slow_far['y'][k], fast_short['y'][k], fast_medium['y'][k], fast_far['y'][k])
 
         print("\nMeasurements finished...\nExiting program...")
         arm.simple_failsafe()

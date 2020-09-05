@@ -7,7 +7,6 @@ import time
 
 import rospy
 
-import measure_precision_lib
 import arm_class
 
 from copy import deepcopy
@@ -74,7 +73,7 @@ def positive_x(arm, step_width):
     print("--->Reached: initial pose\nStarting Measurements...")
     #Measuring
     next_pose = deepcopy(initial_pose)
-     for y_step in range(22):
+    for y_step in range(22):
         next_pose = arm_class.alter_pose_inc(next_pose, verbose=arm._verbose, posy=step_width)
         for x_step in range(31):
             next_pose = arm_class.alter_pose_inc(next_pose, verbose=arm._verbose, posx=step_width)
@@ -83,13 +82,15 @@ def positive_x(arm, step_width):
             else:
                 arm.simple_failsafe()
                 return False
+            diff = Point(
+                x = arm._current_pose.position.x - next_pose.position.x,
+                y = arm._current_pose.position.y - next_pose.position.y,
+                z = arm._current_pose.position.z - next_pose.position.z
+            )
+            position = deepcopy(arm._current_pose.position)
             out_dict['x{}y{}'.format(x_step, y_step)] = {
-                position = deepcopy(arm._current_pose.position),
-                diff = Point(
-                    x = arm._current_pose.position.x - next_pose.position.x,
-                    y = arm._current_pose.position.y - next_pose.position.y,
-                    z = arm._current_pose.position.z - next_pose.position.z
-                )
+                position,
+                diff
             }
     return out_dict
 
@@ -132,7 +133,7 @@ def main():
 
         #Measurements
         print("Starting measurements...")
-        lut[args.limb]['x_pos'] = positive_x(arm)
+        lut[args.limb]['x_pos'] = positive_x(arm, 0.01)
         if lut[args.limb]['x_pos'] is False:
             return False            
 
