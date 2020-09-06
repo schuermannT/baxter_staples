@@ -170,6 +170,23 @@ class Arm(object):
         self._limb.move_to_joint_positions(self._ik_solution)
         self._current_pose = convert_to_pose(self._limb.endpoint_pose())
 
+    def move_precise(self, pose):
+        if self._verbose:
+            print("moving {}_arm more precise...").format(self._limb_name)
+        if self.get_solution(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.02)):
+            self.move_to_solution()
+        else:
+            return False
+        if self.get_solution(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.01)):
+            self.move_to_solution()
+        else:
+            return False
+        if self.get_solution(pose):
+            self.move_to_solution()
+        else:
+            return False
+        return True
+
     def set_neutral(self, open_gripper=True):
         """moves the arm into a neutral pose"""
         self._limb.move_to_neutral()
