@@ -110,9 +110,9 @@ def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
     return out_dict
 
 def print_data_as_csv(data_dict):
-    print("Pose,x_diff[mm],y_diff[mm],z_diff[mm]")
+    print("Pose,x_diff[mm],y_diff[mm],z_diff[mm],,")
     for k in data_dict.keys():
-        print("{},{},{},{}").format(k, data_dict[k].x*1000, data_dict[k].y*1000, data_dict[k].z*1000)
+        print("{},{},{},{},,").format(k, data_dict[k].x*1000, data_dict[k].y*1000, data_dict[k].z*1000)
 
 def main():
     try:
@@ -158,7 +158,7 @@ def main():
         print("Starting measurements...")
         for k in range(10):
             print("--------------> Runde: {}".format(k))
-            lut[args.limb]['x_pos'] = positive_x(arm, step_width=0.02, workspace_x=0.297, workspace_y=0.210)
+            lut[args.limb]['x_pos'] = positive_x(arm, step_width=0.03, workspace_x=0.297, workspace_y=0.210)
             if lut[args.limb]['x_pos'] is False:
                 return False            
 

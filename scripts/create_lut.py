@@ -109,20 +109,13 @@ def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
                 } 
     return out_dict
 
-def print_csv(limb_name, lut_data, step_width, workspace_x=0.297, workspace_y=0.210):
-    x_start=(int)(start_pose[limb_name].pose.position.x*100)
-    x_end=(int)((start_pose[limb_name].pose.position.x+workspace_x)*100)
-    y_start=(int)(start_pose[limb_name].pose.position.y*100)
-    y_end=(int)((start_pose[limb_name].pose.position.y+workspace_y)*100)
-    step=(int)(step_width*100)
-    line1 = "X\Y,"
-    line2 = ","
-    for y_column in range(y_start, y_end, step):
-        line1+="{},,,,".format(y_column)
-        line2+="x_soll[cm],y_soll[cm],x_diff[mm],y_diff[mm],"
-    print(line1)
-    print(line2)
-    #TODO: Fertigstellen
+def print_csv(lut):
+    for arm in lut.keys():
+        print(arm)
+        for way in arm.keys():
+            print(way)
+            for pose in way.keys():
+                print("{},{},{},{}".format(pose, way[pose].x, way[pose].y, way[pose].z))
 
 def main():
     try:
