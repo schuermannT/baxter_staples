@@ -104,25 +104,15 @@ def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
                     y = arm._current_pose.position.y - next_pose.position.y,
                     z = arm._current_pose.position.z - next_pose.position.z
                 )
-                out_dict['x{}y{}'.format(((int)(next_pose.position.x*100)), ((int)(next_pose.position.y*100)))] = {
-                    diff
-                } 
+                out_dict['x{}y{}'.format(((int)(next_pose.position.x*100)), ((int)(next_pose.position.y*100)))] = diff
+            print("row {} finished".format(y_step))
+    print_data_as_csv(out_dict)
     return out_dict
 
-def print_csv(limb_name, lut_data, step_width, workspace_x=0.297, workspace_y=0.210):
-    x_start=(int)(start_pose[limb_name].pose.position.x*100)
-    x_end=(int)((start_pose[limb_name].pose.position.x+workspace_x)*100)
-    y_start=(int)(start_pose[limb_name].pose.position.y*100)
-    y_end=(int)((start_pose[limb_name].pose.position.y+workspace_y)*100)
-    step=(int)(step_width*100)
-    line1 = "X\Y,"
-    line2 = ","
-    for y_column in range(y_start, y_end, step):
-        line1+="{},,,,".format(y_column)
-        line2+="x_soll[cm],y_soll[cm],x_diff[mm],y_diff[mm],"
-    print(line1)
-    print(line2)
-    #TODO: Fertigstellen
+def print_data_as_csv(data_dict):
+    print("Pose,x_diff[mm],y_diff[mm],z_diff[mm]")
+    for k in data_dict.keys():
+        print("{},{},{},{}").format(k, data_dict[k].x*1000, data_dict[k].y*1000, data_dict[k].z*1000)
 
 def main():
     try:
@@ -166,7 +156,7 @@ def main():
 
         #Measurements
         print("Starting measurements...")
-        lut[args.limb]['x_pos'] = positive_x(arm, 0.03, workspace_x=0.297, workspace_y=0.210)
+        lut[args.limb]['x_pos'] = positive_x(arm, step_width=0.02, workspace_x=0.297, workspace_y=0.210)
         if lut[args.limb]['x_pos'] is False:
             return False            
 

@@ -166,7 +166,8 @@ class Arm(object):
 
     def move_to_solution(self):
         """executes the arm movement for the calculated solution"""
-        print("moving %s arm..." %self._limb_name)
+        if self._verbose:
+            print("moving %s arm..." %self._limb_name)
         self._limb.move_to_joint_positions(self._ik_solution)
         self._current_pose = convert_to_pose(self._limb.endpoint_pose())
 
