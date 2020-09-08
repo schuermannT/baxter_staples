@@ -104,7 +104,7 @@ def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
                     y = arm._current_pose.position.y - next_pose.position.y,
                     z = arm._current_pose.position.z - next_pose.position.z
                 )
-                out_dict['x{}y{}'.format(((int)(next_pose.position.x*100)), ((int)(next_pose.position.y*100)))] = diff
+                out_dict['y{}x{}'.format(((int)(next_pose.position.y*100)), ((int)(next_pose.position.x*100)))] = diff
             print("row {} finished".format(y_step))
     print_data_as_csv(out_dict)
     return out_dict
@@ -156,14 +156,16 @@ def main():
 
         #Measurements
         print("Starting measurements...")
-        lut[args.limb]['x_pos'] = positive_x(arm, step_width=0.02, workspace_x=0.297, workspace_y=0.210)
-        if lut[args.limb]['x_pos'] is False:
-            return False            
+        for k in range(10):
+            print("--------------> Runde: {}".format(k))
+            lut[args.limb]['x_pos'] = positive_x(arm, step_width=0.02, workspace_x=0.297, workspace_y=0.210)
+            if lut[args.limb]['x_pos'] is False:
+                return False            
 
         print("\nMeasurements finished...\nExiting program...")
         arm.simple_failsafe()
 
-        print lut
+        #print lut
 
     except rospy.ROSInterruptException as e:
         return e
