@@ -87,9 +87,7 @@ def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
                     y = arm._current_pose.position.y - next_pose.position.y,
                     z = arm._current_pose.position.z - next_pose.position.z
                 )
-                out_dict['x{}y{}'.format(((int)(next_pose.position.x*100)), ((int)(next_pose.position.y*100)))] = {
-                    diff
-                }
+                out_dict['x{}y{}'.format(((int)(next_pose.position.x*100)), ((int)(next_pose.position.y*100)))] = diff
     else:
         next_pose = deepcopy(start_pose[arm._limb_name].pose)
         for y_step in arange(start_pose[arm._limb_name].pose.position.y, start_pose[arm._limb_name].pose.position.y+workspace_y, step_width):

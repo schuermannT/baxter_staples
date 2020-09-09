@@ -53,42 +53,69 @@ start_pose = {
                 )
             }
 
-def positive_x(arm, out_dict=dict(), step_width=0.03, workspace_x=0.297, workspace_y=0.210):
+def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
     print("--- {} arm: positive x").format(arm._limb_name)    
     #raw_input("Press Enter to start...")
+    out_dict = dict()
     diff = Point()
     if step_width < 0.02:
-        print("running this script with a step_width of <0.02 will need a tremendous amount of time and is therefore in this version not supported...")
-        return False
-    next_pose = deepcopy(start_pose[arm._limb_name].pose)
-    for y_step in arange(start_pose[arm._limb_name].pose.position.y, start_pose[arm._limb_name].pose.position.y+workspace_y, step_width):
-        next_pose = arm_class.alter_pose_abs(next_pose, verbose=arm._verbose, posy=y_step)
-        for x_step in arange(start_pose[arm._limb_name].pose.position.x, start_pose[arm._limb_name].pose.position.x+workspace_x, step_width):
-            pose_name = 'y{}x{}'.format(((int)(y_step*100)), ((int)(x_step*100)))
-            next_pose = arm_class.alter_pose_abs(next_pose, verbose=arm._verbose, posx=x_step)
-            if not arm.move_precise(next_pose):
-                arm.simple_failsafe()
-                return False
-            diff.x = arm._current_pose.position.x - next_pose.position.x
-            diff.y = arm._current_pose.position.y - next_pose.position.y
-            diff.z = arm._current_pose.position.z - next_pose.position.z
-            if not pose_name in out_dict.keys():
-                out_dict[pose_name] = deepcopy(diff)
-            else:
-                out_dict[pose_name].x = (out_dict[pose_name].x + diff.x)/2
-                out_dict[pose_name].y = (out_dict[pose_name].y + diff.y)/2
-                out_dict[pose_name].z = (out_dict[pose_name].z + diff.z)/2
-        print("row finished: {}/{}".format(y_step, start_pose[arm._limb_name].pose.position.y+workspace_y))
+        #Initial Pose
+        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(start_pose[arm._limb_name].pose), arm._verbose, posx=-(step_width*2))): #approach starting point with minimal joint play
+            arm.move_to_solution()
+        else:
+            arm.simple_failsafe()
+            return False
+        initial_pose = deepcopy(start_pose[arm._limb_name].pose)
+        if arm.get_solution(arm_class.alter_pose_inc(initial_pose, verbose=arm._verbose, posx=-(step_width))):
+            arm.move_to_solution()
+        else:
+            arm.simple_failsafe()
+            return False
+        print("--->Reached: initial pose\nStarting Measurements...")
+        #Measuring
+        next_pose = deepcopy(initial_pose)
+        for y_step in arange(initial_pose.position.y, initial_pose.position.y+workspace_y, step_width):
+            next_pose = arm_class.alter_pose_abs(next_pose, verbose=arm._verbose, posy=y_step)
+            for x_step in arange(initial_pose.position.x, initial_pose.position.x+workspace_x, step_width):
+                next_pose = arm_class.alter_pose_abs(next_pose, verbose=arm._verbose, posx=x_step)
+                if arm.get_solution(next_pose):
+                    arm.move_to_solution()
+                else:
+                    arm.simple_failsafe()
+                    return False
+                diff = Point(
+                    x = arm._current_pose.position.x - next_pose.position.x,
+                    y = arm._current_pose.position.y - next_pose.position.y,
+                    z = arm._current_pose.position.z - next_pose.position.z
+                )
+                out_dict['x{}y{}'.format(((int)(x_step*100)), ((int)(y_step*100)))] = {
+                    diff
+                }
+    else:
+        next_pose = deepcopy(start_pose[arm._limb_name].pose)
+        for y_step in arange(start_pose[arm._limb_name].pose.position.y, start_pose[arm._limb_name].pose.position.y+workspace_y, step_width):
+            next_pose = arm_class.alter_pose_abs(next_pose, verbose=arm._verbose, posy=y_step)
+            for x_step in arange(start_pose[arm._limb_name].pose.position.x, start_pose[arm._limb_name].pose.position.x+workspace_x, step_width):
+                next_pose = arm_class.alter_pose_abs(next_pose, verbose=arm._verbose, posx=x_step)
+                if not arm.move_precise(next_pose):
+                    arm.simple_failsafe()
+                    return False
+                diff.x = arm._current_pose.position.x - next_pose.position.x
+                diff.y = arm._current_pose.position.y - next_pose.position.y
+                diff.z = arm._current_pose.position.z - next_pose.position.z
+                out_dict['x{}y{}'.format(((int)(x_step*100)), ((int)(y_step*100)))] = {
+                    diff
+                } 
     return out_dict
 
 def print_csv(lut):
     print("\n-----------------------------------------------------------------------")
     for arm in lut.keys():
         print(arm)
-        for way in lut[arm].keys():
+        for way in arm.keys():
             print(way)
-            for pose in lut[arm][way].keys():
-                print("{},{},{},{}".format(pose, lut[arm][way][pose].x, lut[arm][way][pose].y, lut[arm][way][pose].z))
+            for pose in way.keys():
+                print("{},{},{},{}".format(pose, way[pose].x, way[pose].y, way[pose].z))
 
 def main():
     try:
@@ -120,7 +147,6 @@ def main():
         arm = arm_class.Arm(args.limb, args.verbose)
         lut = dict()
         lut[args.limb] = dict()
-        lut[args.limb]['x_pos'] = dict()
         print("Init finished...")
 
         #Move to neutral Pose
@@ -133,15 +159,14 @@ def main():
 
         #Measurements
         print("Starting measurements...")
-        for r in range(10):
-            lut[args.limb]['x_pos'] = positive_x(arm=arm, out_dict=lut[args.limb]['x_pos'], step_width=0.03, workspace_x=0.297, workspace_y=0.210)
-            if lut[args.limb]['x_pos'] is False:
-                return False
-            print("-------------------> Round: {}".format(r+1))
-            print_csv(lut)            
+        lut[args.limb]['x_pos'] = positive_x(arm, 0.03, workspace_x=0.297, workspace_y=0.210)
+        if lut[args.limb]['x_pos'] is False:
+            return False            
 
         print("\nMeasurements finished...\nExiting program...")
         arm.simple_failsafe()
+
+        print_csv(lut)
 
     except rospy.ROSInterruptException as e:
         return e
