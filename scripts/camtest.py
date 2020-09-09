@@ -39,7 +39,7 @@ def main():
     rospy.init_node("camtest")
 
     left_cam = Camtest('left')
-    right_cam = Camtest('right')
+    #right_cam = Camtest('right')
     
     rospy.spin()
     print("Finished")
