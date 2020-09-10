@@ -63,7 +63,7 @@ def create_lut(arm, filename, number_of_rounds=10):
             if lut[arm._limb_name]['x_pos'] is False:
                 return False
             print("-------------------> Round: {}".format(r+1))
-            if (r+1)%10 is 0:
+            if (r+1)%5 is 0:
                 temp_lut = deepcopy(lut)
                 print("averaging newest measurements...")
                 for y in temp_lut[arm._limb_name]['x_pos'].keys():
