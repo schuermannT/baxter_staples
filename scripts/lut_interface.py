@@ -63,16 +63,15 @@ def create_lut(arm, filename, number_of_rounds=10):
             if lut[arm._limb_name]['x_pos'] is False:
                 return False
             print("-------------------> Round: {}".format(r+1))
-            if (r+1)%5 is 0:
+            if (r+1)%10 is 0:
                 temp_lut = deepcopy(lut)
                 print("averaging newest measurements...")
                 for y in temp_lut[arm._limb_name]['x_pos'].keys():
                     for x in temp_lut[arm._limb_name]['x_pos'][y].keys():
                         temp_lut[arm._limb_name]['x_pos'][y][x].x /= (r+1)
                         temp_lut[arm._limb_name]['x_pos'][y][x].y /= (r+1)
-                        print(temp_lut[arm._limb_name]['x_pos'][y][x].z*1000)
                         temp_lut[arm._limb_name]['x_pos'][y][x].z /= (r+1)
-                        print(temp_lut[arm._limb_name]['x_pos'][y][x].z*1000)
+                        time.sleep(0.01) #hier eingebaut, da die division von z sonst scheinbar nicht korrekt durchläuft.
                 write_lut_as_csv(lut=temp_lut, number_of_rounds=r+1, filename="/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/measurements/lut_step_{}".format(r+1)) #TODO: ändern sobald nicht mehr gemessen wird. Stattdessen Schleife für Durchschnitt nur einmal durchlaufen und nicht direkt schreiben.
     return lut    
 
@@ -119,7 +118,7 @@ def print_lut_as_csv(lut, number_of_rounds):
                     print("{},{},{},{},{}".format(y, x, lut[arm][way][y][x].x, lut[arm][way][y][x].y, lut[arm][way][y][x].z))
 
 def write_lut_as_csv(lut, number_of_rounds, filename):
-    writefile = open(filename, 'w') #modes: a=append, w=write(ersetzt vorhandenes)
+    writefile = open(filename, 'w')
     writefile.write("{}\n".format(number_of_rounds))
     for arm in lut.keys():
         writefile.write("{}\n".format(arm))
@@ -217,7 +216,7 @@ def improve_pose(pose, lut, limb_name = 'left'):
     else:
         print("improve_pose: given pose not in improvable workspace")
         return pose
-    return arm_class.alter_pose_inc(pose, posx=x_diff, posy=y_diff) #Die LUT für z weist sehr seltsame Werte auf. Jedoch ist der Auslöser hierfür bisher nicht zu finden. Da die Präzision in Z als weniger wichtig erachtet wird, wird sie hier vorerst nicht berücksichtigt.
+    return arm_class.alter_pose_inc(pose, posx=x_diff, posy=y_diff) #Die LUT für z weist sehr seltsame Werte auf. Die aufsummierten Werte werden scheinbar nicht durch die Anzahl geteilt. Warum ist unklar. Da die Präzision in Z als weniger wichtig erachtet wird, wird sie hier vorerst nicht berücksichtigt.
 
 def main():
     try:
@@ -252,9 +251,9 @@ def main():
         #Move to neutral Pose
         arm.set_neutral()
 
-        #create_lut(arm=arm, filename="/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv", number_of_rounds=30)
-        lut = restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv")['lut']
-        return improve_pose(start_pose['left'].pose, lut, limb_name=arm._limb_name)
+        create_lut(arm=arm, filename="/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv", number_of_rounds=30)
+        """ lut = restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv")['lut']
+        return improve_pose(start_pose['left'].pose, lut, limb_name=arm._limb_name) """
 
         print("\nMeasurements finished...\nExiting program...")
         arm.simple_failsafe()
