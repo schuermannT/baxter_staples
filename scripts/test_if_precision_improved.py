@@ -58,7 +58,7 @@ def save_data(arm, pose, filename):
     x_diff = (arm._current_pose.position.x - pose.position.x)*1000
     y_diff = (arm._current_pose.position.y - pose.position.y)*1000
     z_diff = (arm._current_pose.position.z - pose.position.z)*1000
-    writefile.write("{},{},{}\n").format(x_diff, y_diff, z_diff)
+    writefile.write("{},{},{}\n".format(x_diff, y_diff, z_diff))
     writefile.close()
     print("saved data to {}".format(filename))
 
@@ -92,9 +92,9 @@ def main():
         print("--- Ctrl-D stops the program ---")
         print("Init started...")
         arm = arm_class.Arm('left', verbose=args.verbose)
-        lut = lut_interface.restore_lut_from_file("/home/schuermannBA/ros_ws/src/baxter_staples/precision/my_first_lut/lut")
-        number_of_rounds = 10
-        filelocation = "/home/schuermannBA/ros_ws/src/baxter_staples/precision/improvement_tests/"
+        lut = lut_interface.restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv")['lut']
+        number_of_rounds = 30
+        filelocation = "/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/improvement_tests/"
         test_pose1 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.12, posy=0.05)
         test_pose2 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.2, posy=0.02)
         test_pose3 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.15, posy=0.12)
@@ -139,19 +139,19 @@ def main():
                 return False
         #improved with lut
         for n in range(number_of_rounds):
-            if arm.get_solution(lut_interface.improve_pose(test_pose1, lut=lut, limb_name='left')):
+            if arm.get_solution(lut_interface.improve_pose(deepcopy(test_pose1), lut=lut, limb_name=arm._limb_name)):
                 arm.move_to_solution()
                 save_data(arm, test_pose1, filelocation+"with_lut_1.csv")
             else:
                 arm.simple_failsafe()
                 return False
-            if arm.get_solution(lut_interface.improve_pose(test_pose2, lut=lut, limb_name='left')):
+            if arm.get_solution(lut_interface.improve_pose(deepcopy(test_pose2), lut=lut, limb_name=arm._limb_name)):
                 arm.move_to_solution()
                 save_data(arm, test_pose2, filelocation+"with_lut_2.csv")
             else:
                 arm.simple_failsafe()
                 return False
-            if arm.get_solution(lut_interface.improve_pose(test_pose3, lut=lut, limb_name='left')):
+            if arm.get_solution(lut_interface.improve_pose(deepcopy(test_pose3), lut=lut, limb_name=arm._limb_name)):
                 arm.move_to_solution()
                 save_data(arm, test_pose3, filelocation+"with_lut_3.csv")
             else:
@@ -159,17 +159,17 @@ def main():
                 return False
         #improved with lut an move_precise
         for n in range(number_of_rounds):
-            if arm.move_precise(lut_interface.improve_pose(test_pose1, lut=lut, limb_name='left')):
+            if arm.move_precise(lut_interface.improve_pose(deepcopy(test_pose1), lut=lut, limb_name=arm._limb_name)):
                 save_data(arm, test_pose1, filelocation+"all_1.csv")
             else:
                 arm.simple_failsafe()
                 return False
-            if arm.move_precise(lut_interface.improve_pose(test_pose2, lut=lut, limb_name='left')):
+            if arm.move_precise(lut_interface.improve_pose(deepcopy(test_pose2), lut=lut, limb_name=arm._limb_name)):
                 save_data(arm, test_pose2, filelocation+"all_2.csv")
             else:
                 arm.simple_failsafe()
                 return False
-            if arm.move_precise(lut_interface.improve_pose(test_pose3, lut=lut, limb_name='left')):
+            if arm.move_precise(lut_interface.improve_pose(deepcopy(test_pose3), lut=lut, limb_name=arm._limb_name)):
                 save_data(arm, test_pose3, filelocation+"all_3.csv")
             else:
                 arm.simple_failsafe()
