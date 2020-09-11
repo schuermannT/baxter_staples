@@ -63,7 +63,7 @@ def create_lut(arm, filename, number_of_rounds=10):
             if lut[arm._limb_name]['x_pos'] is False:
                 return False
             print("-------------------> Round: {}".format(r+1))
-            if (r+1)%10 is 0:
+            if r is 0 or (r+1)%10 is 0:
                 temp_lut = deepcopy(lut)
                 print("averaging newest measurements...")
                 for y in temp_lut[arm._limb_name]['x_pos'].keys():
@@ -126,7 +126,7 @@ def write_lut_as_csv(lut, number_of_rounds, filename):
             writefile.write("{}\n".format(way))
             for y in lut[arm][way].keys():
                 for x in lut[arm][way][y].keys():
-                    writefile.writelines("{},{},{},{},{}".format(y, x, lut[arm][way][y][x].x, lut[arm][way][y][x].y, lut[arm][way][y][x].z))
+                    writefile.writelines("{},{},{},{},{}\n".format(y, x, lut[arm][way][y][x].x, lut[arm][way][y][x].y, lut[arm][way][y][x].z))
     writefile.close()
     print("data written to file")
 
@@ -216,7 +216,7 @@ def improve_pose(pose, lut, limb_name = 'left'):
     else:
         print("improve_pose: given pose not in improvable workspace")
         return pose
-    return arm_class.alter_pose_inc(pose, posx=x_diff, posy=y_diff) #Die LUT für z weist sehr seltsame Werte auf. Die aufsummierten Werte werden scheinbar nicht durch die Anzahl geteilt. Warum ist unklar. Da die Präzision in Z als weniger wichtig erachtet wird, wird sie hier vorerst nicht berücksichtigt.
+    return arm_class.alter_pose_inc(pose, posx=x_diff, posy=y_diff, posz=z_diff) #Die LUT für z weist sehr seltsame Werte auf. Die aufsummierten Werte werden scheinbar nicht durch die Anzahl geteilt. Warum ist unklar. Da die Präzision in Z als weniger wichtig erachtet wird, wird sie hier vorerst nicht berücksichtigt.
 
 def main():
     try:
@@ -251,7 +251,7 @@ def main():
         #Move to neutral Pose
         arm.set_neutral()
 
-        create_lut(arm=arm, filename="/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv", number_of_rounds=30)
+        create_lut(arm=arm, filename="/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv", number_of_rounds=50)
         """ lut = restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv")['lut']
         return improve_pose(start_pose['left'].pose, lut, limb_name=arm._limb_name) """
 
