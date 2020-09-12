@@ -94,86 +94,56 @@ def main():
         arm = arm_class.Arm('left', verbose=args.verbose)
         lut = lut_interface.restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv")['lut']
         number_of_rounds = 30
-        filelocation = "/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/improvement_tests/"
-        test_pose1 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.12, posy=0.06)
-        test_pose2 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.2, posy=0.18)
-        test_pose3 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.15, posy=0.12)
+        filelocation = "/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/improvement_tests/1/"
+        test_poses = [
+            arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.06, posy=0.06),
+            arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.06, posy=0.15),
+            arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.14, posy=0.11),
+            arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.23, posy=0.06),
+            arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.23, posy=0.15)
+        ]
         print("Init finished...")
 
-        #not improved measurements
+        #Measurements
         for n in range(number_of_rounds):
-            if arm.get_solution(test_pose1):
-                arm.move_to_solution()
-                save_data(arm, test_pose1, filelocation+"not_improved_1.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.get_solution(test_pose2):
-                arm.move_to_solution()
-                save_data(arm, test_pose2, filelocation+"not_improved_2.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.get_solution(test_pose3):
-                arm.move_to_solution()
-                save_data(arm, test_pose3, filelocation+"not_improved_3.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-        #improved with move_precise
-        for n in range(number_of_rounds):
-            if arm.move_precise(test_pose1):
-                save_data(arm, test_pose1, filelocation+"move_precise_1.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.move_precise(test_pose2):
-                save_data(arm, test_pose2, filelocation+"move_precise_2.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.move_precise(test_pose3):
-                save_data(arm, test_pose3, filelocation+"move_precise_3.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-        #improved with lut
-        for n in range(number_of_rounds):
-            if arm.get_solution(lut_interface.improve_pose(deepcopy(test_pose1), lut=lut, limb_name=arm._limb_name)):
-                arm.move_to_solution()
-                save_data(arm, test_pose1, filelocation+"with_lut_1.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.get_solution(lut_interface.improve_pose(deepcopy(test_pose2), lut=lut, limb_name=arm._limb_name)):
-                arm.move_to_solution()
-                save_data(arm, test_pose2, filelocation+"with_lut_2.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.get_solution(lut_interface.improve_pose(deepcopy(test_pose3), lut=lut, limb_name=arm._limb_name)):
-                arm.move_to_solution()
-                save_data(arm, test_pose3, filelocation+"with_lut_3.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-        #improved with lut an move_precise
-        for n in range(number_of_rounds):
-            if arm.move_precise(lut_interface.improve_pose(deepcopy(test_pose1), lut=lut, limb_name=arm._limb_name)):
-                save_data(arm, test_pose1, filelocation+"all_1.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.move_precise(lut_interface.improve_pose(deepcopy(test_pose2), lut=lut, limb_name=arm._limb_name)):
-                save_data(arm, test_pose2, filelocation+"all_2.csv")
-            else:
-                arm.simple_failsafe()
-                return False
-            if arm.move_precise(lut_interface.improve_pose(deepcopy(test_pose3), lut=lut, limb_name=arm._limb_name)):
-                save_data(arm, test_pose3, filelocation+"all_3.csv")
-            else:
-                arm.simple_failsafe()
-                return False
+            for p in range(len(test_poses)):
+                #not improved measurements
+                if arm.get_solution(test_poses[p]):
+                    arm.move_to_solution()
+                    time.sleep(0.05)
+                    save_data(arm, test_poses[p], filelocation+"not_improved_{}.csv".format(p+1))
+                    time.sleep(0.05)
+                else:
+                    arm.simple_failsafe()
+                    sys.exit()
+            for p in range(len(test_poses)):
+                #improved with move_precise
+                if arm.move_precise(test_poses[p]):
+                    time.sleep(0.05)
+                    save_data(arm, test_poses[p], filelocation+"move_precise_{}.csv".format(p+1))
+                    time.sleep(0.05)
+                else:
+                    arm.simple_failsafe()
+                    sys.exit()
+            for p in range(len(test_poses)):
+                #improved with lut
+                if arm.get_solution(lut_interface.improve_pose(deepcopy(test_poses[p]), lut=lut, limb_name=arm._limb_name)):
+                    arm.move_to_solution()
+                    time.sleep(0.05)
+                    save_data(arm, test_poses[p], filelocation+"with_lut_{}.csv".format(p+1))
+                    time.sleep(0.05)
+                else:
+                    arm.simple_failsafe()
+                    sys.exit()
+            for p in range(len(test_poses)):
+                #improved with lut an move_precise
+                if arm.move_precise(lut_interface.improve_pose(deepcopy(test_poses[p]), lut=lut, limb_name=arm._limb_name)):
+                    time.sleep(0.05)
+                    save_data(arm, test_poses[p], filelocation+"all_{}.csv".format(p+1))
+                    time.sleep(0.05)
+                else:
+                    arm.simple_failsafe()
+                    sys.exit()
 
         print("finished measurements")
     except rospy.ROSInterruptException as e:
