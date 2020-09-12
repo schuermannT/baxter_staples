@@ -72,7 +72,7 @@ def create_lut(arm, filename, number_of_rounds=10):
                         temp_lut[arm._limb_name]['x_pos'][y][x].y /= (r+1)
                         temp_lut[arm._limb_name]['x_pos'][y][x].z /= (r+1)
                         time.sleep(0.01) #hier eingebaut, da die division von z sonst scheinbar nicht korrekt durchläuft.
-                write_lut_as_csv(lut=temp_lut, number_of_rounds=r+1, filename="/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/measurements/lut_step_{}".format(r+1)) #TODO: ändern sobald nicht mehr gemessen wird. Stattdessen Schleife für Durchschnitt nur einmal durchlaufen und nicht direkt schreiben.
+                write_lut_as_csv(lut=temp_lut, number_of_rounds=r+1, filename="/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/measurements/calibrated/lut_step_{}".format(r+1)) #TODO: ändern sobald nicht mehr gemessen wird. Stattdessen Schleife für Durchschnitt nur einmal durchlaufen und nicht direkt schreiben.
     return lut    
 
 def measure_positive_x(arm, out_dict=dict(), step_width=0.03, workspace_x=0.297, workspace_y=0.210):

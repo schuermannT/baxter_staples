@@ -95,8 +95,8 @@ def main():
         lut = lut_interface.restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv")['lut']
         number_of_rounds = 30
         filelocation = "/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/improvement_tests/"
-        test_pose1 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.12, posy=0.05)
-        test_pose2 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.2, posy=0.02)
+        test_pose1 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.12, posy=0.06)
+        test_pose2 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.2, posy=0.18)
         test_pose3 = arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.15, posy=0.12)
         print("Init finished...")
 
