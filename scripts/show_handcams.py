@@ -8,32 +8,30 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 
 import baxter_interface
-from baxter_interface import CHECK_VERSION
 
 class Camtest(object):
     def __init__(self, limb):
         sub_ns = "/cameras/{}_hand_camera/image".format(limb)
         self._limb = limb
-        self.sub = rospy.Subscriber(sub_ns, Image, self.callback)
+        self.sub = rospy.Subscriber(sub_ns, Image, self.show_callback)
         self.bridge = CvBridge()
-        if limb is 'left': 
-            print("Getting robot state...")
-            self._rs = baxter_interface.RobotEnable(baxter_interface.CHECK_VERSION)
-            self._init_state = self._rs.state().enabled
-            if not self._init_state:
-                print("Enabling robot...")
-                self._rs.enable()
-            else:
-                print("Robot already enabled...")
+        print("Getting robot state...")
+        self._rs = baxter_interface.RobotEnable(baxter_interface.CHECK_VERSION)
+        self._init_state = self._rs.state().enabled
+        if not self._init_state:
+            print("Enabling robot...")
+            self._rs.enable()
+        else:
+            print("Robot already enabled...")
 
-    def callback(self, msg):
+    def show_callback(self, msg):
         try:
             img = self.bridge.imgmsg_to_cv2(msg)
             cv2.imshow(self._limb, img)
             cv2.waitKey(1)
         except CvBridgeError as e:
-            print("Bridge-Error")
-	    
+            print("Bridge-Error: {}".format(e))
+
 def main():
     print("Initializing node... ")
     rospy.init_node("camtest")
