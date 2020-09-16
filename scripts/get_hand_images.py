@@ -84,7 +84,7 @@ def main():
         if commando == 'update':
             cam._image_update = True
         elif commando == "write":
-            cv.imwrite("/home/user/schuermann_BA/left_hand_snapshot.jpg", cam._img)
+            cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rename_me.jpg", cam._img)
         elif commando == "window":
             cam.controller.resolution = (320, 200)
             cam.controller.window = (600, 200)
