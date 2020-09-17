@@ -9,14 +9,36 @@ import cv2 as cv
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from copy import deepcopy
+from geometry_msgs.msg import (
+    Pose,
+    Point,
+    Quaternion
+)
 
 import arm_class
 import baxter_interface
 
+pose = Pose(
+    position=Point(
+        x=0.430,
+        y=0.110,
+        z=-0.200,
+    ),
+    orientation=Quaternion(
+        x=-0.000,
+        y=0.999,
+        z=0.000,
+        w=0.000,
+    ),
+)
+
 commands = {
     'update' : "updates and shows the snapshot",
     'write' : "saves the current snapshot as file",
-    'window' : "resizes the camera resolution to a specific field"
+    'window' : "resizes the camera resolution to a specific field",
+    'exposure' : "change the exposure of the camera",
+    'pose' : "get the arms current pose",
+    'gain' : "change the cameras gain"
 }
 
 class Handcam(object):
@@ -88,6 +110,39 @@ def main():
         elif commando == "window":
             cam.controller.resolution = (320, 200)
             cam.controller.window = (600, 200)
+        elif commando == "exposure":
+            cmd_param = raw_input("Enter value (0-100):")
+            cam.controller.exposure = int(cmd_param)
+        elif commando == "pose":
+            cmd_param = raw_input("get or go? ")
+            if cmd_param == "get":
+                print(arm._current_pose)
+            elif cmd_param == "go":
+                arm.set_neutral()
+                arm.get_solution(arm_class.alter_pose_inc(deepcopy(pose), posz=0.1)), arm.move_to_solution()
+                arm.move_precise(pose)
+        elif commando == "gain":
+            cmd_param = raw_input("Enter value (0-79): ")
+            cam.controller.gain = int(cmd_param)
+        elif commando == "balance":
+            cmd_param = raw_input("Enter key and value (red, green, blue) (0-4095): ").split(" ")
+            if cmd_param[0] == "red":
+                cam.controller.white_balace_red = int(cmd_param[1])
+            if cmd_param[0] == "green":
+                cam.controller.white_balace_green = int(cmd_param[1])
+            if cmd_param[0] == "blue":
+                cam.controller.white_balace_blue = int(cmd_param[1])
+        elif commando == "quit":
+            print("resetting camera settings")
+            cam.controller.resolution = (640, 400)
+            cam.controller.exposure = cam.controller.CONTROL_AUTO
+            cam.controller.gain = cam.controller.CONTROL_AUTO
+            cam.controller.white_balace_red = cam.controller.CONTROL_AUTO
+            cam.controller.white_balace_green = cam.controller.CONTROL_AUTO
+            cam.controller.white_balace_blue = cam.controller.CONTROL_AUTO
+            arm.move_precise(arm_class.alter_pose_inc(arm._current_pose, posz=0.1))
+            arm.simple_failsafe()
+            break
         else:
             print("no such command\navailable commands:")
             for c in commands.items():
