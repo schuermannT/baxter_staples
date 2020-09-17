@@ -101,6 +101,11 @@ def main():
     cam = Handcam(args.limb, args.verbose)
     cam.controller.resolution = (1280, 800)
 
+    raw_input("Press Enter to grab pen...")
+    time.sleep(5)
+    arm._gripper.close()
+    arm.set_neutral(False)
+
     while(True):
         commando = raw_input("Enter command\n")
         if commando == 'update':

@@ -41,18 +41,19 @@ def alter_pose_abs(pose, verbose=False, posx = None, posy = None, posz = None, o
         if verbose: 
             print("--- given pose: ---")
             print(pose)
-        pose.position.x = posx
-        pose.position.y = posy
-        pose.position.z = posz
-        pose.orientation.x = orx
-        pose.orientation.y = ory
-        pose.orientation.z = orz
-        pose.orientation.w = orw
+        workpose = deepcopy(pose)
+        workpose.position.x = posx
+        workpose.position.y = posy
+        workpose.position.z = posz
+        workpose.orientation.x = orx
+        workpose.orientation.y = ory
+        workpose.orientation.z = orz
+        workpose.orientation.w = orw
         if verbose:
             print("--- new pose: ---")
-            print(pose)
+            print(workpose)
             print("------------------------")
-        return pose
+        return workpose
 
 def alter_pose_inc(pose, verbose=False, posx = 0.0, posy = 0.0, posz = 0.0, orx = 0.0, ory = 0.0, orz = 0.0, orw = 0.0):
     """modifies the current pose with the given modifiers. the modifiers are defaulted to 0"""
@@ -61,18 +62,19 @@ def alter_pose_inc(pose, verbose=False, posx = 0.0, posy = 0.0, posz = 0.0, orx 
         print("posx={} posy={} posz={} orx={} ory={} orz={} orw={}").format(posx, posy, posz, orx, ory, orz, orw) 
         print("--- given pose: ---")
         print(pose)
-    pose.position.x += posx 
-    pose.position.y += posy
-    pose.position.z += posz
-    pose.orientation.x += orx
-    pose.orientation.y += ory
-    pose.orientation.z += orz
-    pose.orientation.w += orw
+    workpose = deepcopy(pose)
+    workpose.position.x += posx 
+    workpose.position.y += posy
+    workpose.position.z += posz
+    workpose.orientation.x += orx
+    workpose.orientation.y += ory
+    workpose.orientation.z += orz
+    workpose.orientation.w += orw
     if verbose:
         print("--- new pose: ---")
-        print(pose)
+        print(workpose)
         print("------------------------")
-    return pose
+    return workpose
 
 def convert_to_pose(pose_dict):
     """converts a dictionary to a Pose()"""
@@ -126,7 +128,7 @@ class Arm(object):
             print("Calibrating electric gripper...")
             self._gripper.calibrate()
 
-    def get_solution(self, pose):
+    def get_solution(self, pose): #decprecated. just here for compatibility
         """calculates a joint solution for the given pose. Needs to be called before move_to_solution()"""
         if self._verbose: 
             print("--- func: get_solution ---")
@@ -164,29 +166,99 @@ class Arm(object):
             print ("INVALID POSE - No Valid Joint Solution Found.")
         return 0
 
-    def move_to_solution(self):
+    def move_to_solution(self): #deprecated. just here for compatibility
         """executes the arm movement for the calculated solution"""
         if self._verbose:
             print("moving %s arm..." %self._limb_name)
         self._limb.move_to_joint_positions(self._ik_solution)
         self._current_pose = convert_to_pose(self._limb.endpoint_pose())
 
+    def move_to_pose(seld, pose):
+        if self._verbose: 
+            print("--- func: get_solution ---")
+            print("--- pose: ---")
+            print(pose)
+            print("------------------------")
+        del self._ikreq.pose_stamp[:]
+        self._ikreq.pose_stamp.append(PoseStamped(header=self._hdr, pose=pose))
+        try:
+            rospy.wait_for_service(self._ns, 5.0)
+            resp = self._iksvc(self._ikreq)
+        except (rospy.ServiceException, rospy.ROSException) as e:
+            rospy.logerr("Service call failed: %s" %(e,))
+            return 0
+
+        #Check if result is valid, and type of seed ultimately used to get solution
+        #convert rospy's string representation of uint8[]'s to int's
+        resp_seeds = struct.unpack('<%dB' % len(resp.result_type), resp.result_type)
+        if (resp_seeds[0] != resp.RESULT_INVALID):
+            seed_str = {
+                self._ikreq.SEED_USER: 'User Provided Seed',
+                self._ikreq.SEED_CURRENT: 'Current Joint Angles',
+                self._ikreq.SEED_NS_MAP : 'Nullspace Setpoints',
+            }.get(resp_seeds[0], 'None')
+            if self._verbose:
+                print("SUCCESS - Valid Joint Solution Found from Seed Type: %s" % (seed_str,))
+            #Format solution into Limb API-compatible dictionary
+            self._ik_solution = dict(zip(resp.joints[0].name, resp.joints[0].position))
+            if self._verbose:
+                print("\nIK Solution:\n", self._ik_solution)
+                print("--------------------------")
+                print("Response Message:\n", resp )
+                print("moving %s arm..." %self._limb_name)
+            self._limb.move_to_joint_positions(self._ik_solution)
+            self._current_pose = convert_to_pose(self._limb.endpoint_pose())
+            return 1
+        else:
+            print ("INVALID POSE - No Valid Joint Solution Found.")
+        return 0
+
     def move_precise(self, pose):
         if self._verbose:
             print("moving {}_arm more precise...").format(self._limb_name)
-        if self.get_solution(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.02)):
-            self.move_to_solution()
-        else:
+        if not self.move_to_pose(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.02)):
             return False
-        if self.get_solution(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.01)):
-            self.move_to_solution()
-        else:
+        if not self.move_to_pose(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.01)):
             return False
-        if self.get_solution(pose):
-            self.move_to_solution()
-        else:
+        if not self.move_to_pose(pose):
             return False
         return True
+
+    def move_direct(self, pose, precise=False):
+        if self._verbose:
+            print("moving {}_arm on kind of linear way".format(self._limb_name))
+        big_move = True
+        step_width = 0.03
+        while big_move:
+            x_diff = pose.position.x - self._current_pose.position.x
+            y_diff = pose.position.y - self._current_pose.position.y
+            z_diff = pose.position.z - self._current_pose.position.z
+            if self._verbose:
+                print("way left:\nx: {}\ny: {}\nz: {}")
+            big_move = False
+            x_step = 0.0
+            y_step = 0.0
+            z_step = 0.0
+            if x_diff > step_width:
+                x_diff -= step_width
+                x_step = step_width
+            elif x_diff < -step_width:
+                x_step = -step_width
+            elif y_diff > step_width:
+                y_step = step_width
+            elif y_diff < -step_width:
+                y_step = -step_width
+            elif z_diff > step_width:
+                z_step = step_width
+            elif z_diff < -step_width:
+                z_step = -step_width
+            elif precise:
+                self.move_precise(pose)
+            else:
+                self.move_to_pose(pose)
+                break
+            self.move_to_pose(alter_pose_inc(self._current_pose, verbose=self._verbose, posx=x_step, posy=y_step, posz=z_step))
+            
 
     def set_neutral(self, open_gripper=True):
         """moves the arm into a neutral pose"""
