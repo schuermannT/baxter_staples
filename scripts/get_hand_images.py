@@ -16,6 +16,7 @@ from geometry_msgs.msg import (
 )
 
 import arm_class
+import cam_class
 import baxter_interface
 
 pose = Pose(
@@ -40,36 +41,6 @@ commands = {
     'pose' : "get the arms current pose",
     'gain' : "change the cameras gain"
 }
-
-class Handcam(object):
-    def __init__(self, limb, verbose):
-        sub_cam = "/cameras/{}_hand_camera/image".format(limb)
-        self._limb = limb
-        self.controller = baxter_interface.CameraController("{}_hand_camera".format(limb))
-        self.sub = rospy.Subscriber(sub_cam, Image, self.show_callback)
-        self.bridge = CvBridge()
-        self._image_update = True
-        self._verbose = verbose
-        print("Getting robot state...")
-        self._rs = baxter_interface.RobotEnable(baxter_interface.CHECK_VERSION)
-        self._init_state = self._rs.state().enabled
-        if not self._init_state:
-            print("Enabling robot...")
-            self._rs.enable()
-        else:
-            print("Robot already enabled...")
-
-    def show_callback(self, msg):
-        try:
-            img = self.bridge.imgmsg_to_cv2(msg)
-            if self._image_update:
-                self._img = deepcopy(img)
-                cv.imshow("snapshot", self._img)
-                self._image_update = False
-            cv.imshow(self._limb, img)
-            cv.waitKey(1)
-        except CvBridgeError as e:
-            print("Bridge-Error: {}".format(e))
 
 def main():
     # Argument Parsing
@@ -98,13 +69,13 @@ def main():
     print("Init started...")
     arm = arm_class.Arm(args.limb, args.verbose)
     print("Init finished...")
-    cam = Handcam(args.limb, args.verbose)
-    cam.controller.resolution = (1280, 800)
+    cam = cam_class.Cam(args.limb, args.verbose)
+    #cam.controller.resolution = (1280, 800)
 
-    raw_input("Press Enter to grab pen...")
+    """ raw_input("Press Enter to grab pen...")
     time.sleep(5)
     arm._gripper.close()
-    arm.set_neutral(False)
+    arm.set_neutral(False) """
 
     while(True):
         commando = raw_input("Enter command\n")
@@ -116,16 +87,19 @@ def main():
             cam.controller.resolution = (320, 200)
             cam.controller.window = (600, 200)
         elif commando == "exposure":
-            cmd_param = raw_input("Enter value (0-100):")
+            cmd_param = raw_input("Enter value (0-100): ")
             cam.controller.exposure = int(cmd_param)
         elif commando == "pose":
-            cmd_param = raw_input("get or go? ")
+            cmd_param = raw_input("get, go or rotate? ")
             if cmd_param == "get":
                 print(arm._current_pose)
             elif cmd_param == "go":
                 arm.set_neutral()
-                arm.get_solution(arm_class.alter_pose_inc(deepcopy(pose), posz=0.1)), arm.move_to_solution()
+                arm.move_to_pose(arm_class.alter_pose_inc(deepcopy(pose), posz=0.1))
                 arm.move_precise(pose)
+            elif cmd_param == "rotate":
+                cmd_param = raw_input("enter rotation: ")
+                arm.move_to_pose(arm_class.alter_pose_inc(pose, args.verbose, orx=float(cmd_param)+arm._current_pose.orientation.x))
         elif commando == "gain":
             cmd_param = raw_input("Enter value (0-79): ")
             cam.controller.gain = int(cmd_param)

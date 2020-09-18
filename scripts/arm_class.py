@@ -173,7 +173,7 @@ class Arm(object):
         self._limb.move_to_joint_positions(self._ik_solution)
         self._current_pose = convert_to_pose(self._limb.endpoint_pose())
 
-    def move_to_pose(seld, pose):
+    def move_to_pose(self, pose):
         if self._verbose: 
             print("--- func: get_solution ---")
             print("--- pose: ---")
@@ -208,10 +208,10 @@ class Arm(object):
                 print("moving %s arm..." %self._limb_name)
             self._limb.move_to_joint_positions(self._ik_solution)
             self._current_pose = convert_to_pose(self._limb.endpoint_pose())
-            return 1
+            return True
         else:
             print ("INVALID POSE - No Valid Joint Solution Found.")
-        return 0
+        return False
 
     def move_precise(self, pose):
         if self._verbose:
@@ -234,7 +234,7 @@ class Arm(object):
             y_diff = pose.position.y - self._current_pose.position.y
             z_diff = pose.position.z - self._current_pose.position.z
             if self._verbose:
-                print("way left:\nx: {}\ny: {}\nz: {}")
+                print("way left:\nx: {}\ny: {}\nz: {}".format(x_diff, y_diff, z_diff))
             big_move = False
             x_step = 0.0
             y_step = 0.0
@@ -242,22 +242,35 @@ class Arm(object):
             if x_diff > step_width:
                 x_diff -= step_width
                 x_step = step_width
+                big_move = True
             elif x_diff < -step_width:
+                x_diff += step_width
                 x_step = -step_width
+                big_move = True
             elif y_diff > step_width:
+                y_diff -= step_width
                 y_step = step_width
+                big_move = True
             elif y_diff < -step_width:
+                y_diff += step_width
                 y_step = -step_width
+                big_move = True
             elif z_diff > step_width:
+                z_diff -= step_width
                 z_step = step_width
+                big_move = True
             elif z_diff < -step_width:
+                z_diff += step_width
                 z_step = -step_width
+                big_move = True
             elif precise:
                 self.move_precise(pose)
+                return True
             else:
                 self.move_to_pose(pose)
-                break
+                return True
             self.move_to_pose(alter_pose_inc(self._current_pose, verbose=self._verbose, posx=x_step, posy=y_step, posz=z_step))
+        return False
             
 
     def set_neutral(self, open_gripper=True):
@@ -443,8 +456,8 @@ class Arm(object):
         self.set_neutral()
         return True
 
-    def simple_failsafe(self):
+    def simple_failsafe(self, open_gripper=True):
         """moves the arm to a neutral pose and disables it. If using both arms try the global function 'failsafe'"""
         print("Exit routine started \nShutting down arm in neutral pose")
-        self.set_neutral()
+        self.set_neutral(open_gripper)
         self._rs.disable()

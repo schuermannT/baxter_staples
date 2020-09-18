@@ -5,12 +5,35 @@ import sys
 import numpy as np
 from matplotlib import pyplot as plot
 
+def plot_it(masks):
+    fig, ax = plot.subplots(5, 2, sharex='none', sharey='none')
+    i = 0
+    for row in ax:
+        for col in row:
+            col.imshow()
+    plot.show()
 
 
 def main():
-    #calculations
+    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rot_03.jpg", 0)
+    masks = list()
+    if img is None:
+        sys.exit("can't load image")
+    canny = cv.Canny(img, 1, 100)
+    contours = cv.findContours(canny.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[1]
+    for c in contours:
+        rect = cv.minAreaRect(c)
+        box = cv.boxPoints(rect)
+        box = np.int0(box)
+        mask = np.ones(img.shape[:2], np.uint8)
+        cv.drawContours(mask, [box], 0, 255, -1)
+        masks.append(mask.copy())
+    plot_it(np.asarray(masks))
+
+
+    """ #calculations
     kernel = np.ones((5,1), np.uint8)
-    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/gzla_3.jpg")
+    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rot_03.jpg")
     if img is None:
         sys.exit("can't load image")
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -31,6 +54,7 @@ def main():
     cv.drawContours(mask, [box], 0, 255, 0)
     cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/contour0.jpg", mask)
 
+    
     #show in plot
     plot.subplot(611), plot.imshow(img), plot.title("original"), plot.xticks([]), plot.yticks([])
     plot.subplot(612), plot.imshow(blur, cmap = "gray"), plot.title("blurred"), plot.xticks([]), plot.yticks([])
@@ -39,7 +63,7 @@ def main():
     plot.subplot(615), plot.imshow(canny, cmap = "gray"), plot.title("canny edge detection"), plot.xticks([]), plot.yticks([])
     plot.subplot(616), plot.imshow(mask, cmap = "gray"), plot.title("mask"), plot.xticks([]), plot.yticks([])
     plot.show()
-    #cv.waitKey(0)
+    #cv.waitKey(0) """
 
 
 if __name__ == "__main__":
