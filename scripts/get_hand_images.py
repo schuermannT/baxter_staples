@@ -33,13 +33,50 @@ pose = Pose(
     ),
 )
 
+paper_pose = Pose(
+    position=Point(
+        x=0.610,
+        y=0.285,
+        z=0.100
+    ),
+    orientation=Quaternion(
+        x=-0.700,
+        y=0.700,
+        z=0.000,
+        w=0.000
+    )
+)
+
+""" Paper1280:
+position: 
+  x: 0.576751688976
+  y: 0.330536543527
+  z: -0.07204134598
+orientation: 
+  x: -0.703464896814
+  y: 0.710467625684
+  z: 0.0117420328291
+  w: -0.0153302469344 
+
+Paper640:
+position: 
+  x: 0.639653824451
+  y: 0.333314267116
+  z: -0.0556015894701
+orientation: 
+  x: -0.698709839035
+  y: 0.715198454438
+  z: -0.00254755593687
+  w: 0.0170071033134"""
+
 commands = {
-    'update' : "updates and shows the snapshot",
-    'write' : "saves the current snapshot as file",
-    'window' : "resizes the camera resolution to a specific field",
-    'exposure' : "change the exposure of the camera",
-    'pose' : "get the arms current pose",
-    'gain' : "change the cameras gain"
+    'update'    : "updates and shows the snapshot",
+    'write'     : "saves the current snapshot as file",
+    'window'    : "resizes the camera resolution to a specific field",
+    'exposure'  : "change the exposure of the camera",
+    'pose'      : "get the arms current pose",
+    'gain'      : "change the cameras gain",
+    'etc'       : "and many more..."
 }
 
 def main():
@@ -95,11 +132,11 @@ def main():
                 print(arm._current_pose)
             elif cmd_param == "go":
                 arm.set_neutral()
-                arm.move_to_pose(arm_class.alter_pose_inc(deepcopy(pose), posz=0.1))
-                arm.move_precise(pose)
+                arm.move_to_pose(arm_class.alter_pose_inc(deepcopy(paper_pose), posz=0.1))
+                arm.move_precise(paper_pose)
             elif cmd_param == "rotate":
                 cmd_param = raw_input("enter rotation: ")
-                arm.move_to_pose(arm_class.alter_pose_inc(pose, args.verbose, orx=float(cmd_param)+arm._current_pose.orientation.x))
+                arm.move_to_pose(arm_class.alter_pose_inc(arm._current_pose, args.verbose, orx=float(cmd_param)+arm._current_pose.orientation.x))
         elif commando == "gain":
             cmd_param = raw_input("Enter value (0-79): ")
             cam.controller.gain = int(cmd_param)

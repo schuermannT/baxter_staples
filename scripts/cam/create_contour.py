@@ -6,29 +6,52 @@ import numpy as np
 from matplotlib import pyplot as plot
 
 def plot_it(masks):
-    fig, ax = plot.subplots(5, 2, sharex='none', sharey='none')
     i = 0
-    for row in ax:
-        for col in row:
-            col.imshow()
-    plot.show()
+    while i in range(len(masks)):
+        fig, ax = plot.subplots(5, 2, sharex='none', sharey='none')
+        for row in ax:
+            for col in row:
+                col.imshow(masks[i], cmap="gray")
+                col.title.set_text(i)
+                i+=1
+        print("showing: {}-{} of {}".format(i-10, i-1, len(masks)-1))
+        plot.show()
+
+def contour_on_paper(img, contour):
+    rect = cv.minAreaRect(contour)
+    box = cv.boxPoints(rect)
+    box = np.int0(box)
+    bgr = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+    cv.drawContours(bgr, [box], 0, (0,255,0), 1)
+    cv.imshow("Kontur auf Bild", bgr)
+    key = cv.waitKey(0)
+    print(key)
+    if key == 119:
+        mask = np.ones(img.shape[:2], np.uint8)
+        cv.drawContours(mask, [box], 0, 255, -1)
+        cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/document.jpg", mask)
 
 
 def main():
-    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rot_03.jpg", 0)
+    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_5.jpg", 0)
     masks = list()
     if img is None:
         sys.exit("can't load image")
-    canny = cv.Canny(img, 1, 100)
+    canny = cv.Canny(img, 100, 200)
     contours = cv.findContours(canny.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[1]
+    i = 0
     for c in contours:
+        print("{}/{}".format(i, len(contours)-1))
+        i+=1
+        contour_on_paper(img, c)
+    """ for c in contours:
         rect = cv.minAreaRect(c)
         box = cv.boxPoints(rect)
         box = np.int0(box)
         mask = np.ones(img.shape[:2], np.uint8)
         cv.drawContours(mask, [box], 0, 255, -1)
         masks.append(mask.copy())
-    plot_it(np.asarray(masks))
+    plot_it(np.asarray(masks)) """
 
 
     """ #calculations
