@@ -15,8 +15,11 @@ from geometry_msgs.msg import (
     Quaternion
 )
 
+sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/cv_scripts")
+
 import arm_class
 import cam_class
+import detector
 import baxter_interface
 
 pose = Pose(
@@ -148,6 +151,8 @@ def main():
                 cam.controller.white_balace_green = int(cmd_param[1])
             if cmd_param[0] == "blue":
                 cam.controller.white_balace_blue = int(cmd_param[1])
+        elif commando == "find":
+            detector.detect_staple(detector.detect_paper(deepcopy(cam._img)))
         elif commando == "quit":
             print("resetting camera settings")
             cam.controller.resolution = (640, 400)
