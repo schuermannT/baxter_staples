@@ -6,6 +6,37 @@ import numpy as np
 from matplotlib import pyplot as plot
 from copy import deepcopy
 
+def create_rim(contour, mask):
+    (x,y),(MA,ma),angle = cv.fitEllipse(contour)
+    print("MA: {} ma: {} angle: {}".format(MA, ma, angle))
+    rim_width_y = MA*(20.0/210.0) #rim width [mm] in y divided by DIN A4 width [mm]
+    rim_width_x = ma*(25.0/297.0) #rim width [mm] in x divided by DIN A4 length [mm]
+    rect = cv.minAreaRect(contour)
+    box = cv.boxPoints(rect)
+    box = np.int0(box)
+    work_angle = (angle - 90.0)*np.pi/180
+    rim_box = deepcopy(box)
+    if work_angle <= 0.0:
+        rim_box[0][0] = box[0][0] + (rim_width_x*np.cos(work_angle)) #bottom left x
+        rim_box[0][1] = box[0][1] - (rim_width_y*np.cos(work_angle)) #bottom left y
+        rim_box[1][0] = box[1][0] + (rim_width_x*np.cos(work_angle)) #top left x
+        rim_box[1][1] = box[1][1] + (rim_width_y*np.cos(work_angle)) #top left y
+        rim_box[2][0] = box[2][0] - (rim_width_x*np.cos(work_angle)) #top right x
+        rim_box[2][1] = box[2][1] + (rim_width_y*np.cos(work_angle)) #top right y
+        rim_box[3][0] = box[3][0] - (rim_width_x*np.cos(work_angle)) #bottom right x
+        rim_box[3][1] = box[3][1] - (rim_width_y*np.cos(work_angle)) #bottom right y
+    elif work_angle > 0.0:
+        rim_box[0][0] = box[0][0] - (rim_width_x*np.cos(work_angle)) #bottom right x
+        rim_box[0][1] = box[0][1] - (rim_width_y*np.cos(work_angle)) #bottom right y
+        rim_box[1][0] = box[1][0] + (rim_width_x*np.cos(work_angle)) #bottom left x
+        rim_box[1][1] = box[1][1] - (rim_width_y*np.cos(work_angle)) #bottom left y
+        rim_box[2][0] = box[2][0] + (rim_width_x*np.cos(work_angle)) #top left x
+        rim_box[2][1] = box[2][1] + (rim_width_y*np.cos(work_angle)) #top left y
+        rim_box[3][0] = box[3][0] - (rim_width_x*np.cos(work_angle)) #top right x
+        rim_box[3][1] = box[3][1] + (rim_width_y*np.cos(work_angle)) #top right y     
+    cv.drawContours(mask, [rim_box], 0, 0, -1)
+    return rim_box, mask
+
 def create_box_mask(contour, image_shape):
     mask = np.ones(image_shape, np.uint8)
     rect = cv.minAreaRect(contour)
@@ -48,18 +79,17 @@ def detect_paper(img):
     sublayer_mask = cv.erode(sublayer_mask, erode_kernel, iterations=1)
     minus_background = cv.bitwise_and(img, sublayer_mask)
     paper_cnt, paper_mask = find_match(img, paper_mask)
-    (x,y),(MA,ma),angle = cv.fitEllipse(paper_cnt)
-    print("MA: {} ma: {} angle: {}".format(MA, ma, angle))
-    show_img = cv.cvtColor(minus_background, cv.COLOR_GRAY2BGR)
-    cv.drawContours(show_img, paper_cnt, 0, (0,255,0), 0)
     minus_sublayer = cv.bitwise_and(img, paper_mask)
-    rim = MA*0.0095
-
+    rim_mask = create_rim(paper_cnt, paper_mask)[1]
+    only_rim = cv.bitwise_and(img, rim_mask)
+    show_img = cv.cvtColor(minus_sublayer, cv.COLOR_GRAY2BGR)
+    
     plot.subplot(411), plot.imshow(img, cmap = "gray"), plot.title("image"), plot.xticks([]), plot.yticks([])
-    plot.subplot(412), plot.imshow(sublayer_mask, cmap = "gray"), plot.title("substracted background"), plot.xticks([]), plot.yticks([])
-    plot.subplot(413), plot.imshow(show_img, cmap = "gray"), plot.title("paper_detected"), plot.xticks([]), plot.yticks([])
-    plot.subplot(414), plot.imshow(minus_sublayer, cmap = "gray"), plot.title("substracted sublayer"), plot.xticks([]), plot.yticks([])
+    plot.subplot(412), plot.imshow(minus_background, cmap = "gray"), plot.title("substracted background"), plot.xticks([]), plot.yticks([])
+    plot.subplot(413), plot.imshow(minus_sublayer, cmap = "gray"), plot.title("substracted sublayer"), plot.xticks([]), plot.yticks([])
+    plot.subplot(414), plot.imshow(only_rim, cmap = "gray"), plot.title("only paper rim"), plot.xticks([]), plot.yticks([])
     plot.show()
+
 
 def main():
     img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_5.jpg", 0)
