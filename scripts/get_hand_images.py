@@ -110,12 +110,13 @@ def main():
     arm = arm_class.Arm(args.limb, args.verbose)
     print("Init finished...")
     cam = cam_class.Cam(args.limb, args.verbose)
-    #cam.controller.resolution = (1280, 800)
 
     """ raw_input("Press Enter to grab pen...")
     time.sleep(5)
     arm._gripper.close()
     arm.set_neutral(False) """
+
+    windowed = False
 
     while(True):
         commando = raw_input("Enter command\n")
@@ -124,8 +125,13 @@ def main():
         elif commando == "write":
             cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rename_me.jpg", cam._img)
         elif commando == "window":
-            cam.controller.resolution = (320, 200)
-            cam.controller.window = (600, 200)
+            if not windowed:
+                cam.controller.resolution = (320, 200)
+                cam.controller.window = (600, 200)
+                windowed = True
+            else:
+                cam.controller.resolution = (640,400)
+                windowed = False
         elif commando == "exposure":
             cmd_param = raw_input("Enter value (0-100): ")
             cam.controller.exposure = int(cmd_param)
@@ -152,7 +158,12 @@ def main():
             if cmd_param[0] == "blue":
                 cam.controller.white_balace_blue = int(cmd_param[1])
         elif commando == "find":
-            detector.detect_staple(detector.detect_paper(deepcopy(cam._img)))
+            if not windowed:
+                paper_success, only_rim = detector.detect_paper(deepcopy(cam._img))
+                if paper_success:
+                    staple_success, contour = detector.detect_staple(only_rim)
+            else:
+                success, contour = detector.detect_staple(deepcopy(cam._img))
         elif commando == "quit":
             print("resetting camera settings")
             cam.controller.resolution = (640, 400)
