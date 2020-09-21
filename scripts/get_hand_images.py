@@ -121,7 +121,7 @@ def main():
     while(True):
         commando = raw_input("Enter command\n")
         if commando == 'update':
-            cam._image_update = True
+            cam.update_snapshot = True
         elif commando == "write":
             cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rename_me.jpg", cam._img)
         elif commando == "window":

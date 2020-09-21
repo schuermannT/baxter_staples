@@ -17,19 +17,29 @@ class Cam(object):
         self._limb = limb
         self.controller = baxter_interface.CameraController("{}_hand_camera".format(limb))
         self.controller.resolution = (640, 400)
-        self.sub = rospy.Subscriber(sub_cam, Image, self.show_callback)
         self.bridge = CvBridge()
-        self._image_update = True
+        self.update_snapshot = True
         self._verbose = verbose
+        self._init = True
+        self.sub = rospy.Subscriber(sub_cam, Image, self.show_callback)
+
 
     def show_callback(self, msg):
         try:
             img = self.bridge.imgmsg_to_cv2(msg)
-            if self._image_update:
-                self._img = deepcopy(img)
-                cv.imshow("snapshot", self._img)
-                self._image_update = False
+            if self.update_snapshot:
+                self._snapshot = deepcopy(img)
+                self.update_snapshot = False
+                cv.imshow("snapshot", self._snapshot)
+                self._update_snapshot_window = False
+                if self._init:
+                    cv.setMouseCallback("snapshot", self.onMouse)
+                    self._init = False
             cv.imshow(self._limb, img)
             cv.waitKey(1)
         except CvBridgeError as e:
             print("Bridge-Error: {}".format(e))
+
+    def onMouse(self, event, x, y, flags, param):
+        if event == cv.EVENT_LBUTTONDOWN:
+            print("{},{}".format(x,y))

@@ -71,18 +71,18 @@ def find_match(img, comparator, maxL=1280.0, minL=0.0):
             best_match = match
             best_mask = deepcopy(work_mask)
             best_contour = deepcopy(c)
-        if verbose:
-            cv.destroyAllWindows()
-            show_img = deepcopy(img)
-            show_img = cv.cvtColor(show_img, cv.COLOR_GRAY2BGR)
-            cv.drawContours(show_img, [c], 0, (0,255,0), 1)
-            """ cv.imshow("{}".format(match), show_img)
-            if cv.waitKey(0) == 119:
-                cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/small_staple.jpg", best_mask)    """             
-            plot.subplot(311), plot.imshow(comparator, cmap = "gray"), plot.title("comparator"), plot.xticks([]), plot.yticks([])
-            plot.subplot(312), plot.imshow(work_mask, cmap = "gray"), plot.title("found mask"), plot.xticks([]), plot.yticks([])
-            plot.subplot(313), plot.imshow(show_img), plot.title("found contour: {}".format(match)), plot.xticks([]), plot.yticks([])
-            plot.show()
+            if verbose:
+                cv.destroyAllWindows()
+                show_img = deepcopy(img)
+                show_img = cv.cvtColor(show_img, cv.COLOR_GRAY2BGR)
+                cv.drawContours(show_img, [c], 0, (0,255,0), 1)
+                """ cv.imshow("{}".format(match), show_img)
+                if cv.waitKey(0) == 119:
+                    cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/small_staple.jpg", best_mask)    """             
+                plot.subplot(311), plot.imshow(comparator, cmap = "gray"), plot.title("comparator"), plot.xticks([]), plot.yticks([])
+                plot.subplot(312), plot.imshow(work_mask, cmap = "gray"), plot.title("found mask"), plot.xticks([]), plot.yticks([])
+                plot.subplot(313), plot.imshow(show_img), plot.title("found contour: {}".format(match)), plot.xticks([]), plot.yticks([])
+                plot.show()
     if verbose:
         print("deviation for best match at: {}%\nnumber of best matches: {}".format(float(best_match)*100, i))
     if not best_contour is None:
