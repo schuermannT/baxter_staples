@@ -15,7 +15,7 @@ from geometry_msgs.msg import (
     Quaternion
 )
 
-sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/cv_scripts")
+sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
 
 import arm_class
 import cam_class
@@ -107,34 +107,27 @@ def main():
     time.sleep(0.5)
     print("--- Ctrl-D stops the program ---")
     print("Init started...")
-    arm = arm_class.Arm(args.limb, args.verbose)
+    arm = arm_class.Arm(args.limb, args.verbose, True)
     print("Init finished...")
-    cam = cam_class.Cam(args.limb, args.verbose)
-
-    """ raw_input("Press Enter to grab pen...")
-    time.sleep(5)
-    arm._gripper.close()
-    arm.set_neutral(False) """
-
-    windowed = False
 
     while(True):
         commando = raw_input("Enter command\n")
         if commando == 'update':
-            cam.update_snapshot = True
+            arm.cam.update_snapshot = True
         elif commando == "write":
-            cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rename_me.jpg", cam._img)
+            cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rename_me.jpg", arm.cam._img)
         elif commando == "window":
-            if not windowed:
-                cam.controller.resolution = (320, 200)
-                cam.controller.window = (600, 200)
-                windowed = True
+            if not arm.cam.windowed:
+                arm.cam.controller.resolution = (320, 200)
+                arm.cam.controller.window = (600, 200)
+                arm.cam.windowed = True
             else:
-                cam.controller.resolution = (640,400)
-                windowed = False
+                arm.cam.controller.window = (320, 200)
+                arm.cam.controller.resolution = (640,400)
+                arm.cam.windowed = False
         elif commando == "exposure":
             cmd_param = raw_input("Enter value (0-100): ")
-            cam.controller.exposure = int(cmd_param)
+            arm.cam.controller.exposure = int(cmd_param)
         elif commando == "pose":
             cmd_param = raw_input("get, go or rotate? ")
             if cmd_param == "get":
@@ -146,32 +139,41 @@ def main():
             elif cmd_param == "rotate":
                 cmd_param = raw_input("enter rotation: ")
                 arm.move_to_pose(arm_class.alter_pose_inc(arm._current_pose, args.verbose, orx=float(cmd_param)+arm._current_pose.orientation.x))
+            elif cmd_param == "neutral":
+                arm.set_neutral()
+            elif cmd_param == "approach":
+                arm.move_direct(arm_class.alter_pose_abs(arm._current_pose, posz=-0.1))
         elif commando == "gain":
             cmd_param = raw_input("Enter value (0-79): ")
-            cam.controller.gain = int(cmd_param)
-        elif commando == "balance":
-            cmd_param = raw_input("Enter key and value (red, green, blue) (0-4095): ").split(" ")
-            if cmd_param[0] == "red":
-                cam.controller.white_balace_red = int(cmd_param[1])
-            if cmd_param[0] == "green":
-                cam.controller.white_balace_green = int(cmd_param[1])
-            if cmd_param[0] == "blue":
-                cam.controller.white_balace_blue = int(cmd_param[1])
+            arm.cam.controller.gain = int(cmd_param)
         elif commando == "find":
-            if not windowed:
-                paper_success, only_rim = detector.detect_paper(deepcopy(cam._img))
+            if not arm.cam.windowed:
+                paper_success, only_rim = detector.detect_paper(deepcopy(arm.cam._snapshot))
                 if paper_success:
                     staple_success, contour = detector.detect_staple(only_rim)
+                    if staple_success:
+                        staple_distance = detector.distance_to_contour(contour, arm.cam.get_action_point(), arm._current_pose.position.z)
+                        staple_pose = arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1])
+                        arm.move_to_pose(staple_pose)
+                        #arm.move_direct(arm_class.alter_pose_abs(staple_pose, posz=-0.1))
             else:
-                success, contour = detector.detect_staple(deepcopy(cam._img))
+                success, contour = detector.detect_staple(deepcopy(arm.cam._snapshot))
+                if success:
+                        staple_distance = detector.distance_to_contour(contour, arm.cam.get_action_point(), arm._current_pose.position.z)
+                        staple_pose = arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1])
+                        arm.move_to_pose(staple_pose)
+        elif commando == "pen":
+            raw_input("Press Enter to grab pen...")
+            time.sleep(5)
+            arm._gripper.close()
         elif commando == "quit":
             print("resetting camera settings")
-            cam.controller.resolution = (640, 400)
-            cam.controller.exposure = cam.controller.CONTROL_AUTO
-            cam.controller.gain = cam.controller.CONTROL_AUTO
-            cam.controller.white_balace_red = cam.controller.CONTROL_AUTO
-            cam.controller.white_balace_green = cam.controller.CONTROL_AUTO
-            cam.controller.white_balace_blue = cam.controller.CONTROL_AUTO
+            arm.cam.controller.resolution = (640, 400)
+            arm.cam.controller.exposure = arm.cam.controller.CONTROL_AUTO
+            arm.cam.controller.gain = arm.cam.controller.CONTROL_AUTO
+            arm.cam.controller.white_balace_red = arm.cam.controller.CONTROL_AUTO
+            arm.cam.controller.white_balace_green = arm.cam.controller.CONTROL_AUTO
+            arm.cam.controller.white_balace_blue = arm.cam.controller.CONTROL_AUTO
             arm.move_precise(arm_class.alter_pose_inc(arm._current_pose, posz=0.1))
             arm.simple_failsafe()
             break

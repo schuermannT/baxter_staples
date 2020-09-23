@@ -13,6 +13,8 @@ from geometry_msgs.msg import (
     Quaternion
 )
 
+sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
+
 import arm_class
 import cam_class
 import baxter_interface

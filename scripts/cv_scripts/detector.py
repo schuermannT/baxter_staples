@@ -9,17 +9,17 @@ from copy import deepcopy
 verbose = True
 
 def create_rim(contour, mask, rim_width):
-    (x,y),(MA,ma),angle = cv.fitEllipse(contour)
-    if verbose:
-        print("MA: {} ma: {} angle: {}".format(MA, ma, angle))
-    rim_width_y = MA*(rim_width[0]/210.0) #rim width [mm] in y divided by DIN A4 width [mm]
-    rim_width_x = ma*(rim_width[1]/297.0) #rim width [mm] in x divided by DIN A4 length [mm]
     rect = cv.minAreaRect(contour)
     box = cv.boxPoints(rect)
     box = np.int0(box)
-    work_angle = (angle - 90.0)*np.pi/180
+    row_length, col_length, angle = get_info(box)
+    if verbose:
+        print("col_length: {} row_length: {} angle: {}".format(col_length, row_length, angle))
+    rim_width_y = col_length*(rim_width[0]/210.0) #rim width [mm] in y divided by DIN A4 width [mm]
+    rim_width_x = row_length*(rim_width[1]/297.0) #rim width [mm] in x divided by DIN A4 length [mm]
+    work_angle = (np.pi / 2) + angle
     rim_box = deepcopy(box)
-    if work_angle <= 0.0:
+    if work_angle >= 0.0:
         rim_box[0][0] = box[0][0] + (rim_width_x*np.cos(work_angle)) #bottom left x
         rim_box[0][1] = box[0][1] - (rim_width_y*np.cos(work_angle)) #bottom left y
         rim_box[1][0] = box[1][0] + (rim_width_x*np.cos(work_angle)) #top left x
@@ -28,7 +28,7 @@ def create_rim(contour, mask, rim_width):
         rim_box[2][1] = box[2][1] + (rim_width_y*np.cos(work_angle)) #top right y
         rim_box[3][0] = box[3][0] - (rim_width_x*np.cos(work_angle)) #bottom right x
         rim_box[3][1] = box[3][1] - (rim_width_y*np.cos(work_angle)) #bottom right y
-    elif work_angle > 0.0:
+    elif work_angle < 0.0:
         rim_box[0][0] = box[0][0] - (rim_width_x*np.cos(work_angle)) #bottom right x
         rim_box[0][1] = box[0][1] - (rim_width_y*np.cos(work_angle)) #bottom right y
         rim_box[1][0] = box[1][0] + (rim_width_x*np.cos(work_angle)) #bottom left x
@@ -52,6 +52,18 @@ def create_box_contour(contour):
     box = np.int0(box)
     return box
 
+def get_info(box_cnt):
+    if(box_cnt[0][1] > box_cnt[1][1]):
+        row_length = np.sqrt(np.square(box_cnt[3][0] - box_cnt[0][0]) + np.square(box_cnt[3][1] - box_cnt[0][1]))
+        col_length = np.sqrt(np.square(box_cnt[1][0] - box_cnt[0][0]) + np.square(box_cnt[1][1] - box_cnt[0][1]))
+        angle = np.arctan((box_cnt[3][0] - box_cnt[0][0]) / (box_cnt[3][1] - box_cnt[0][1]))
+    else:
+        row_length = np.sqrt(np.square(box_cnt[0][0] - box_cnt[1][0]) + np.square(box_cnt[0][1] - box_cnt[1][1]))
+        col_length = np.sqrt(np.square(box_cnt[2][0] - box_cnt[1][0]) + np.square(box_cnt[2][1] - box_cnt[1][1]))
+        angle = np.arctan((box_cnt[3][0] - box_cnt[0][0]) / (box_cnt[3][1] - box_cnt[0][1]))
+    return row_length, col_length, angle
+
+
 def find_match(img, comparator, maxL=1280.0, minL=0.0):
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -70,7 +82,7 @@ def find_match(img, comparator, maxL=1280.0, minL=0.0):
                 print(arcL)
             best_match = match
             best_mask = deepcopy(work_mask)
-            best_contour = deepcopy(c)
+            best_contour = create_box_contour(c)
             if verbose:
                 cv.destroyAllWindows()
                 show_img = deepcopy(img)
@@ -109,7 +121,8 @@ def detect_staple(img):
         print("cannot find any staple")
         return False, img
     img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
-    cv.drawContours(img, found_contour, 0, (0,255,0), 2)
+    print(found_contour)
+    cv.drawContours(img, [found_contour], 0, (0,255,0), 2)
     if verbose:
         plot.subplot(211), plot.imshow(cmp_mask, cmap = "gray"), plot.title("comparator"), plot.xticks([]), plot.yticks([])
         plot.subplot(212), plot.imshow(img), plot.title("found staple"), plot.xticks([]), plot.yticks([])
@@ -150,6 +163,12 @@ def detect_paper(img):
         plot.subplot(414), plot.imshow(only_rim, cmap = "gray"), plot.title("only paper rim"), plot.xticks([]), plot.yticks([])
         plot.show()
     return True, only_rim
+
+def distance_to_contour(staple_box_cnt, gripper_action_point, arm_z):
+    factor = -9530.9 * arm_z + 1949.7
+    distance_x = (staple_box_cnt[0][0] - gripper_action_point[0]) / factor
+    distance_y = -(staple_box_cnt[0][1] - gripper_action_point[1]) / factor
+    return (distance_x, distance_y)
 
 
 def main():

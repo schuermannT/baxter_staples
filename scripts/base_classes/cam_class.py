@@ -12,23 +12,26 @@ import baxter_interface
 from copy import deepcopy
 
 class Cam(object):
-    def __init__(self, limb, verbose, arm_z=5.0):
+    def __init__(self, limb, verbose, arm_z=5.0, windowed=False):
         sub_cam = "/cameras/{}_hand_camera/image".format(limb)
         self._limb = limb
         self.controller = baxter_interface.CameraController("{}_hand_camera".format(limb))
         self.controller.resolution = (640, 400)
         self.bridge = CvBridge()
-        self.update_snapshot = False
+        self.update_snapshot = True
         self._verbose = verbose
         self._init = True
         self.sub = rospy.Subscriber(sub_cam, Image, self.show_callback)
         self.arm_z = arm_z
+        self.windowed = windowed
+
 
     def show_callback(self, msg):
         try:
             img = self.bridge.imgmsg_to_cv2(msg)
             if self.arm_z < 5.0:
-                self.draw_action_point(img)
+                action_point = self.get_action_point()
+                cv.circle(img, action_point, 2, (0,0,255), -1)
             if self.update_snapshot:
                 self._snapshot = deepcopy(img)
                 self.update_snapshot = False
@@ -46,10 +49,12 @@ class Cam(object):
         if event == cv.EVENT_LBUTTONDOWN:
             print("{},{}".format(x,y))
 
-    def draw_action_point(self, img):
+    def get_action_point(self):
         display_y = (163.15*self.arm_z)+162.13
         display_x = (-47.03*self.arm_z)+379.19
-        cv.circle(img, (int(display_x),int(display_y)), 2, (0,0,255), -1)
+        if self.windowed:
+            display_x -= 280
+        return (int(display_x),int(display_y))
 
     def update_z(self, z):
         self.arm_z = z

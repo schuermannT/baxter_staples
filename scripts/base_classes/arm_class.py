@@ -119,6 +119,7 @@ class Arm(object):
         self.cam_wanted = cam_wanted   
         if cam_wanted:
             self.cam = cam_class.Cam(limb, self._verbose)
+            self.cam.update_z(self._current_pose.position.z)
         
         print("Getting robot state...")
         self._rs = baxter_interface.RobotEnable(baxter_interface.CHECK_VERSION)
@@ -212,7 +213,8 @@ class Arm(object):
                 print("moving %s arm..." %self._limb_name)
             self._limb.move_to_joint_positions(self._ik_solution)
             self._current_pose = convert_to_pose(self._limb.endpoint_pose())
-            self.cam.update_z(self._current_pose.position.z)
+            if self.cam_wanted:
+                self.cam.update_z(self._current_pose.position.z)
             return True
         else:
             print ("INVALID POSE - No Valid Joint Solution Found.")
@@ -223,7 +225,8 @@ class Arm(object):
             print("moving {}_arm more precise...").format(self._limb_name)
         if not self.move_to_pose(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.02)):
             return False
-        self.cam.update_z(self._current_pose.position.z)
+        if self.cam_wanted:
+            self.cam.update_z(self._current_pose.position.z)
         if not self.move_to_pose(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.01)):
             return False
         if not self.move_to_pose(pose):
@@ -276,7 +279,8 @@ class Arm(object):
                 self.move_to_pose(pose)
                 return True
             self.move_to_pose(alter_pose_inc(self._current_pose, verbose=self._verbose, posx=x_step, posy=y_step, posz=z_step))
-            self.cam.update_z(self._current_pose.position.z)
+            if self.cam_wanted:
+                self.cam.update_z(self._current_pose.position.z)
         return False
             
 

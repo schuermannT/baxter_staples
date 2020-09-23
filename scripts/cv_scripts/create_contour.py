@@ -21,6 +21,7 @@ def contour_on_paper(img, contour):
     rect = cv.minAreaRect(contour)
     box = cv.boxPoints(rect)
     box = np.int0(box)
+    print("{}".format(box))
     bgr = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
     cv.drawContours(bgr, [box], 0, (0,255,0), 1)
     cv.imshow("Kontur auf Bild", bgr)
@@ -33,7 +34,7 @@ def contour_on_paper(img, contour):
 
 
 def main():
-    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_5.jpg", 0)
+    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rot_07.jpg", 0)
     masks = list()
     if img is None:
         sys.exit("can't load image")
