@@ -55,8 +55,8 @@ def main():
     rospy.init_node("pen_and_paper", anonymous = True)
     time.sleep(0.5)
     print("Init started...")
-    arm = arm_class.Arm(args.limb, args.verbose)
-    cam = cam_class.Cam(args.limb, args.verbose)
+    #cam = cam_class.Cam(args.limb, args.verbose)
+    arm = arm_class.Arm(args.limb, args.verbose, True)
     print("Init finished...")
 
     arm.set_neutral()
@@ -69,19 +69,20 @@ def main():
     if not arm.move_to_pose(arm_class.alter_pose_inc(pose, args.verbose, posz=0.12)):
         arm.simple_failsafe()
         return False
+    raw_input("mark point")
     if not arm.move_direct(pose):
         arm.simple_failsafe()
         return False
     if not arm.move_to_pose(arm_class.alter_pose_inc(pose, args.verbose, posz=-0.01)):
         arm.simple_failsafe()
         return False
-        print(arm._current_pose)
+    print(arm._current_pose)
     for i in range(10):
         if not arm.move_to_pose(arm_class.alter_pose_inc(pose, args.verbose, posz=(i*0.02))):
             arm.simple_failsafe()
             return False
         time.sleep(1)
-        cam.update_snapshot = True
+        arm.cam.update_snapshot = True
         print(arm._current_pose)
         raw_input("{} - ".format(i+1))
     
