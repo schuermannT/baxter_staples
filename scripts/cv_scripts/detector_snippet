@@ -1,0 +1,22 @@
+    rim_width_y = col_length*(rim_width[0]/210.0) #rim width [mm] in y divided by DIN A4 width [mm]
+    rim_width_x = row_length*(rim_width[1]/297.0) #rim width [mm] in x divided by DIN A4 length [mm]
+    work_angle = (np.pi / 2) + angle
+    rim_box = deepcopy(box)
+    if work_angle >= 0.0:
+        rim_box[0][0] = box[0][0] + (rim_width_x*np.cos(work_angle)) #bottom left x
+        rim_box[0][1] = box[0][1] - (rim_width_y*np.cos(work_angle)) #bottom left y
+        rim_box[1][0] = box[1][0] + (rim_width_x*np.cos(work_angle)) #top left x
+        rim_box[1][1] = box[1][1] + (rim_width_y*np.cos(work_angle)) #top left y
+        rim_box[2][0] = box[2][0] - (rim_width_x*np.cos(work_angle)) #top right x
+        rim_box[2][1] = box[2][1] + (rim_width_y*np.cos(work_angle)) #top right y
+        rim_box[3][0] = box[3][0] - (rim_width_x*np.cos(work_angle)) #bottom right x
+        rim_box[3][1] = box[3][1] - (rim_width_y*np.cos(work_angle)) #bottom right y
+    elif work_angle < 0.0:
+        rim_box[0][0] = box[0][0] - (rim_width_x*np.cos(work_angle)) #bottom right x
+        rim_box[0][1] = box[0][1] - (rim_width_y*np.cos(work_angle)) #bottom right y
+        rim_box[1][0] = box[1][0] + (rim_width_x*np.cos(work_angle)) #bottom left x
+        rim_box[1][1] = box[1][1] - (rim_width_y*np.cos(work_angle)) #bottom left y
+        rim_box[2][0] = box[2][0] + (rim_width_x*np.cos(work_angle)) #top left x
+        rim_box[2][1] = box[2][1] + (rim_width_y*np.cos(work_angle)) #top left y
+        rim_box[3][0] = box[3][0] - (rim_width_x*np.cos(work_angle)) #top right x
+        rim_box[3][1] = box[3][1] + (rim_width_y*np.cos(work_angle)) #top right y

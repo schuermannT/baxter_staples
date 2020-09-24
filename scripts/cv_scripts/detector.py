@@ -12,32 +12,40 @@ def create_rim(contour, mask, rim_width):
     rect = cv.minAreaRect(contour)
     box = cv.boxPoints(rect)
     box = np.int0(box)
-    row_length, col_length, angle = get_info(box)
+    main_length, sec_length, angle, mainline_endpoint = get_box_info(box)
     if verbose:
-        print("col_length: {} row_length: {} angle: {}".format(col_length, row_length, angle))
-    rim_width_y = col_length*(rim_width[0]/210.0) #rim width [mm] in y divided by DIN A4 width [mm]
-    rim_width_x = row_length*(rim_width[1]/297.0) #rim width [mm] in x divided by DIN A4 length [mm]
-    work_angle = (np.pi / 2) + angle
+        print("main_length: {} sec_length: {} angle: {}".format(main_length, sec_length, angle))
+    rim_corner_length = np.sqrt(np.square(main_length*(rim_width[1]/297.0)) + np.square(sec_length*(rim_width[0]/210.0)))
     rim_box = deepcopy(box)
-    if work_angle >= 0.0:
-        rim_box[0][0] = box[0][0] + (rim_width_x*np.cos(work_angle)) #bottom left x
-        rim_box[0][1] = box[0][1] - (rim_width_y*np.cos(work_angle)) #bottom left y
-        rim_box[1][0] = box[1][0] + (rim_width_x*np.cos(work_angle)) #top left x
-        rim_box[1][1] = box[1][1] + (rim_width_y*np.cos(work_angle)) #top left y
-        rim_box[2][0] = box[2][0] - (rim_width_x*np.cos(work_angle)) #top right x
-        rim_box[2][1] = box[2][1] + (rim_width_y*np.cos(work_angle)) #top right y
-        rim_box[3][0] = box[3][0] - (rim_width_x*np.cos(work_angle)) #bottom right x
-        rim_box[3][1] = box[3][1] - (rim_width_y*np.cos(work_angle)) #bottom right y
-    elif work_angle < 0.0:
-        rim_box[0][0] = box[0][0] - (rim_width_x*np.cos(work_angle)) #bottom right x
-        rim_box[0][1] = box[0][1] - (rim_width_y*np.cos(work_angle)) #bottom right y
-        rim_box[1][0] = box[1][0] + (rim_width_x*np.cos(work_angle)) #bottom left x
-        rim_box[1][1] = box[1][1] - (rim_width_y*np.cos(work_angle)) #bottom left y
-        rim_box[2][0] = box[2][0] + (rim_width_x*np.cos(work_angle)) #top left x
-        rim_box[2][1] = box[2][1] + (rim_width_y*np.cos(work_angle)) #top left y
-        rim_box[3][0] = box[3][0] - (rim_width_x*np.cos(work_angle)) #top right x
-        rim_box[3][1] = box[3][1] + (rim_width_y*np.cos(work_angle)) #top right y     
+    if mainline_endpoint == 3 :
+        angle += (np.pi/4)
+        cols = (rim_corner_length*np.sin(angle))
+        rows = (rim_corner_length*np.cos(angle))
+        rim_box[0][0] = box[0][0] + cols #bottom left col
+        rim_box[0][1] = box[0][1] - rows #bottom left row
+        rim_box[1][0] = box[1][0] + cols #top left col
+        rim_box[1][1] = box[1][1] + rows #top left colrow
+        rim_box[2][0] = box[2][0] - cols #top right col
+        rim_box[2][1] = box[2][1] + rows #top right row
+        rim_box[3][0] = box[3][0] - cols #bottom right col
+        rim_box[3][1] = box[3][1] - rows #bottom right row
+    else:
+        angle -= (np.pi/4)
+        cols = (rim_corner_length*np.cos(angle))
+        rows = (rim_corner_length*np.sin(angle))
+        rim_box[0][0] = box[0][0] - cols #bottom right col
+        rim_box[0][1] = box[0][1] - rows #bottom right row
+        rim_box[1][0] = box[1][0] + cols #bottom left col
+        rim_box[1][1] = box[1][1] - rows #bottom left row
+        rim_box[2][0] = box[2][0] + cols #top left col
+        rim_box[2][1] = box[2][1] + rows #top left row
+        rim_box[3][0] = box[3][0] - cols #top right col
+        rim_box[3][1] = box[3][1] + rows #top right row
+    temp = create_box_mask(rim_box, mask.shape)
     cv.drawContours(mask, [rim_box], 0, 0, -1)
+    cv.imshow("mask", temp)
+    cv.imshow("x",mask)
+    cv.waitKey(0)
     return rim_box, mask
 
 def create_box_mask(contour, image_shape):
@@ -52,16 +60,22 @@ def create_box_contour(contour):
     box = np.int0(box)
     return box
 
-def get_info(box_cnt):
-    if(box_cnt[0][1] > box_cnt[1][1]):
-        row_length = np.sqrt(np.square(box_cnt[3][0] - box_cnt[0][0]) + np.square(box_cnt[3][1] - box_cnt[0][1]))
-        col_length = np.sqrt(np.square(box_cnt[1][0] - box_cnt[0][0]) + np.square(box_cnt[1][1] - box_cnt[0][1]))
-        angle = np.arctan((box_cnt[3][0] - box_cnt[0][0]) / (box_cnt[3][1] - box_cnt[0][1]))
+def get_box_info(box_cnt):
+    l03 = np.sqrt(np.square(box_cnt[3][0] - box_cnt[0][0]) + np.square(box_cnt[3][1] - box_cnt[0][1]))
+    l01 = np.sqrt(np.square(box_cnt[1][0] - box_cnt[0][0]) + np.square(box_cnt[1][1] - box_cnt[0][1]))
+    gkdak = float(box_cnt[3][0] - box_cnt[0][0]) / float(box_cnt[3][1] - box_cnt[0][1])
+    angle03 = np.arctan(gkdak)+(np.pi/2)
+    if l03 > l01 :
+        main_length = l03
+        secondary_length = l01
+        angle = angle03
+        mainline_endpoint = 3
     else:
-        row_length = np.sqrt(np.square(box_cnt[0][0] - box_cnt[1][0]) + np.square(box_cnt[0][1] - box_cnt[1][1]))
-        col_length = np.sqrt(np.square(box_cnt[2][0] - box_cnt[1][0]) + np.square(box_cnt[2][1] - box_cnt[1][1]))
-        angle = np.arctan((box_cnt[3][0] - box_cnt[0][0]) / (box_cnt[3][1] - box_cnt[0][1]))
-    return row_length, col_length, angle
+        main_length = l01
+        secondary_length = l03
+        angle = angle03
+        mainline_endpoint = 1
+    return main_length, secondary_length, angle, mainline_endpoint
 
 
 def find_match(img, comparator, maxL=1280.0, minL=0.0):
@@ -164,19 +178,19 @@ def detect_paper(img):
         plot.show()
     return True, only_rim
 
-def distance_to_contour(staple_box_cnt, gripper_action_point, arm_z):
+def distance_to_point(point, gripper_action_point, arm_z):
     factor = -9530.9 * arm_z + 1949.7
-    distance_x = (staple_box_cnt[0][0] - gripper_action_point[0]) / factor
-    distance_y = -(staple_box_cnt[0][1] - gripper_action_point[1]) / factor
+    distance_x = (point[0] - gripper_action_point[0]) / factor
+    distance_y = -(point[1] - gripper_action_point[1]) / factor
     return (distance_x, distance_y)
 
 
 def main():
-    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/gzla_2.jpg", 0)
-    """ success, only_rim = detect_paper(img)
-    if not success:
-        return False """
-    detect_staple(img)
+    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_2.jpg", 0)
+    success, only_rim = detect_paper(img)
+    """ if not success:
+        return False
+    detect_staple(only_rim) """
 
 
 if __name__ == "__main__":

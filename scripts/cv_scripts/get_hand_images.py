@@ -82,6 +82,26 @@ commands = {
     'etc'       : "and many more..."
 }
 
+def mark_staple(arm, box_cnt):
+    mainL, secL, angle, mainline_endpoint = detector.get_box_info(box_cnt)
+    startpoint_distance = detector.distance_to_point(box_cnt[0], arm.cam.get_action_point(), arm._current_pose.position.z)
+    endpoint_distance = detector.distance_to_point(box_cnt[mainline_endpoint], arm.cam.get_action_point(), arm._current_pose.position.z)
+    startpose = arm_class.alter_pose_inc(arm._current_pose, posx=startpoint_distance[0], posy=startpoint_distance[1])
+    endpose = arm_class.alter_pose_inc(arm._current_pose, posx=endpoint_distance[0], posy=endpoint_distance[1])
+    endpose = arm_class.alter_pose_abs(endpose, posz=-0.13)
+    if not arm.move_precise(startpose):
+        return False
+    startpose = arm_class.alter_pose_abs(startpose, posz=-0.13)
+    if not arm.move_direct(startpose):
+        return False
+    if not arm.move_to_pose(endpose):
+        return False
+    retreat = arm_class.alter_pose_inc(endpose, posz=0.2)
+    if not arm.move_to_pose(retreat):
+        return False
+    
+
+
 def main():
     # Argument Parsing
     arg_fmt = argparse.RawDescriptionHelpFormatter
@@ -149,19 +169,17 @@ def main():
         elif commando == "find":
             if not arm.cam.windowed:
                 paper_success, only_rim = detector.detect_paper(deepcopy(arm.cam._snapshot))
-                if paper_success:
+                """ if paper_success:
                     staple_success, contour = detector.detect_staple(only_rim)
                     if staple_success:
-                        staple_distance = detector.distance_to_contour(contour, arm.cam.get_action_point(), arm._current_pose.position.z)
+                        staple_distance = detector.distance_to_point(contour[0], arm.cam.get_action_point(), arm._current_pose.position.z)
                         staple_pose = arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1])
                         arm.move_to_pose(staple_pose)
-                        #arm.move_direct(arm_class.alter_pose_abs(staple_pose, posz=-0.1))
+                        print("please approach to enhance accuracy") """
             else:
                 success, contour = detector.detect_staple(deepcopy(arm.cam._snapshot))
                 if success:
-                        staple_distance = detector.distance_to_contour(contour, arm.cam.get_action_point(), arm._current_pose.position.z)
-                        staple_pose = arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1])
-                        arm.move_to_pose(staple_pose)
+                        mark_staple(arm, contour)
         elif commando == "pen":
             raw_input("Press Enter to grab pen...")
             time.sleep(5)
