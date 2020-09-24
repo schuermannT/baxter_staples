@@ -1,3 +1,4 @@
+Ansatz1:
     rim_width_y = col_length*(rim_width[0]/210.0) #rim width [mm] in y divided by DIN A4 width [mm]
     rim_width_x = row_length*(rim_width[1]/297.0) #rim width [mm] in x divided by DIN A4 length [mm]
     work_angle = (np.pi / 2) + angle
@@ -20,3 +21,40 @@
         rim_box[2][1] = box[2][1] + (rim_width_y*np.cos(work_angle)) #top left y
         rim_box[3][0] = box[3][0] - (rim_width_x*np.cos(work_angle)) #top right x
         rim_box[3][1] = box[3][1] + (rim_width_y*np.cos(work_angle)) #top right y
+
+Ansatz2:
+    rim_corner_length = np.sqrt(np.square(main_length*(rim_width[1]/297.0)) + np.square(sec_length*(rim_width[0]/210.0)))
+    rim_box = deepcopy(box)
+    if mainline_endpoint == 3 :
+        angle += (np.pi/4)
+        cols = (rim_corner_length*np.sin(angle))
+        rows = (rim_corner_length*np.cos(angle))
+        rim_box[0][0] = box[0][0] + cols #bottom left col
+        rim_box[0][1] = box[0][1] - rows #bottom left row
+        rim_box[1][0] = box[1][0] + cols #top left col
+        rim_box[1][1] = box[1][1] + rows #top left colrow
+        rim_box[2][0] = box[2][0] - cols #top right col
+        rim_box[2][1] = box[2][1] + rows #top right row
+        rim_box[3][0] = box[3][0] - cols #bottom right col
+        rim_box[3][1] = box[3][1] - rows #bottom right row
+    else:
+        angle -= (np.pi/4)
+        cols = (rim_corner_length*np.cos(angle))
+        rows = (rim_corner_length*np.sin(angle))
+        rim_box[0][0] = box[0][0] - cols #bottom right col
+        rim_box[0][1] = box[0][1] - rows #bottom right row
+        rim_box[1][0] = box[1][0] + cols #bottom left col
+        rim_box[1][1] = box[1][1] - rows #bottom left row
+        rim_box[2][0] = box[2][0] + cols #top left col
+        rim_box[2][1] = box[2][1] + rows #top left row
+        rim_box[3][0] = box[3][0] - cols #top right col
+        rim_box[3][1] = box[3][1] + rows #top right row
+
+Ansatz3:
+    rim_width_cols = main_length*(rim_width[0]/210.0) #rim width [mm] in y divided by DIN A4 width [mm]
+    rim_width_rows = sec_length*(rim_width[1]/297.0) #rim width [mm] in x divided by DIN A4 length [mm]
+    rim_box = deepcopy(box)
+    if mainline_endpoint == 3 :
+        angle += (np.pi/4)
+        cols = rim_width_cols + np.sin(angle)
+        rows = rim_width_rows - np.cos(angle)

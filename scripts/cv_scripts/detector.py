@@ -43,9 +43,9 @@ def create_rim(contour, mask, rim_width):
         rim_box[3][1] = box[3][1] + rows #top right row
     temp = create_box_mask(rim_box, mask.shape)
     cv.drawContours(mask, [rim_box], 0, 0, -1)
-    cv.imshow("mask", temp)
+    """ cv.imshow("mask", temp)
     cv.imshow("x",mask)
-    cv.waitKey(0)
+    cv.waitKey(0) """
     return rim_box, mask
 
 def create_box_mask(contour, image_shape):
@@ -178,6 +178,17 @@ def detect_paper(img):
         plot.show()
     return True, only_rim
 
+def mask_window(img, gripper_action_point):
+    img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    mask = np.zeros(img.shape, np.uint8)
+    field = 60
+    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]-field), 255, -1)
+    img = cv.bitwise_and(img, mask)
+    """ plot.subplot(211), plot.imshow(mask, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
+    plot.subplot(212), plot.imshow(img, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
+    plot.show() """
+    return img
+
 def distance_to_point(point, gripper_action_point, arm_z):
     factor = -9530.9 * arm_z + 1949.7
     distance_x = (point[0] - gripper_action_point[0]) / factor
@@ -186,7 +197,7 @@ def distance_to_point(point, gripper_action_point, arm_z):
 
 
 def main():
-    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_2.jpg", 0)
+    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_1.jpg", 0)
     success, only_rim = detect_paper(img)
     """ if not success:
         return False

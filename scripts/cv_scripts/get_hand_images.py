@@ -169,13 +169,13 @@ def main():
         elif commando == "find":
             if not arm.cam.windowed:
                 paper_success, only_rim = detector.detect_paper(deepcopy(arm.cam._snapshot))
-                """ if paper_success:
+                if paper_success:
                     staple_success, contour = detector.detect_staple(only_rim)
                     if staple_success:
                         staple_distance = detector.distance_to_point(contour[0], arm.cam.get_action_point(), arm._current_pose.position.z)
                         staple_pose = arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1])
                         arm.move_to_pose(staple_pose)
-                        print("please approach to enhance accuracy") """
+                        print("please approach to enhance accuracy")
             else:
                 success, contour = detector.detect_staple(deepcopy(arm.cam._snapshot))
                 if success:
@@ -184,6 +184,8 @@ def main():
             raw_input("Press Enter to grab pen...")
             time.sleep(5)
             arm._gripper.close()
+        elif commando == "roi":
+            arm.cam._snapshot = detector.mask_window(deepcopy(arm.cam._snapshot), arm.cam.get_action_point())
         elif commando == "quit":
             print("resetting camera settings")
             arm.cam.controller.resolution = (640, 400)

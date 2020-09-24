@@ -29,9 +29,6 @@ class Cam(object):
     def show_callback(self, msg):
         try:
             img = self.bridge.imgmsg_to_cv2(msg)
-            if self.arm_z < 5.0:
-                action_point = self.get_action_point()
-                cv.circle(img, action_point, 2, (0,0,255), -1)
             if self.update_snapshot:
                 self._snapshot = deepcopy(img)
                 self.update_snapshot = False
@@ -40,6 +37,9 @@ class Cam(object):
                 if self._init:
                     cv.setMouseCallback("snapshot", self.onMouse)
                     self._init = False
+            if self.arm_z < 5.0:
+                action_point = self.get_action_point()
+                cv.circle(img, action_point, 2, (0,0,255), -1)
             cv.imshow(self._limb, img)
             cv.waitKey(1)
         except CvBridgeError as e:
