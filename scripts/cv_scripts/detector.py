@@ -3,16 +3,20 @@
 import cv2 as cv
 import sys
 import numpy as np
+import matplotlib
+matplotlib.use('TKAgg')
 from matplotlib import pyplot as plot
 from copy import deepcopy
 
-verbose = True
+verbose = False
 
 def create_rim(contour, mask, rim_width):
     rect = cv.minAreaRect(contour)
     box = cv.boxPoints(rect)
     box = np.int0(box)
     main_length, sec_length, angle, mainline_endpoint = get_box_info(box)
+    if main_length == 0:
+        return False, None
     if verbose:
         print("main_length: {} sec_length: {} angle: {}".format(main_length, sec_length, angle))
     rim_corner_length = np.sqrt(np.square(main_length*(rim_width[1]/297.0)) + np.square(sec_length*(rim_width[0]/210.0)))
@@ -41,11 +45,7 @@ def create_rim(contour, mask, rim_width):
         rim_box[2][1] = box[2][1] + rows #top left row
         rim_box[3][0] = box[3][0] - cols #top right col
         rim_box[3][1] = box[3][1] + rows #top right row
-    temp = create_box_mask(rim_box, mask.shape)
     cv.drawContours(mask, [rim_box], 0, 0, -1)
-    """ cv.imshow("mask", temp)
-    cv.imshow("x",mask)
-    cv.waitKey(0) """
     return rim_box, mask
 
 def create_box_mask(contour, image_shape):
@@ -63,7 +63,10 @@ def create_box_contour(contour):
 def get_box_info(box_cnt):
     l03 = np.sqrt(np.square(box_cnt[3][0] - box_cnt[0][0]) + np.square(box_cnt[3][1] - box_cnt[0][1]))
     l01 = np.sqrt(np.square(box_cnt[1][0] - box_cnt[0][0]) + np.square(box_cnt[1][1] - box_cnt[0][1]))
-    gkdak = float(box_cnt[3][0] - box_cnt[0][0]) / float(box_cnt[3][1] - box_cnt[0][1])
+    ankathete = float(box_cnt[3][1] - box_cnt[0][1])
+    if ankathete == 0:
+        return 0, None, None, None
+    gkdak = float(box_cnt[3][0] - box_cnt[0][0]) / ankathete
     angle03 = np.arctan(gkdak)+(np.pi/2)
     if l03 > l01 :
         main_length = l03
@@ -97,27 +100,37 @@ def find_match(img, comparator, maxL=1280.0, minL=0.0):
             best_match = match
             best_mask = deepcopy(work_mask)
             best_contour = create_box_contour(c)
-            if verbose:
-                cv.destroyAllWindows()
-                show_img = deepcopy(img)
-                show_img = cv.cvtColor(show_img, cv.COLOR_GRAY2BGR)
-                cv.drawContours(show_img, [c], 0, (0,255,0), 1)
-                """ cv.imshow("{}".format(match), show_img)
-                if cv.waitKey(0) == 119:
-                    cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/small_staple.jpg", best_mask)    """             
-                plot.subplot(311), plot.imshow(comparator, cmap = "gray"), plot.title("comparator"), plot.xticks([]), plot.yticks([])
-                plot.subplot(312), plot.imshow(work_mask, cmap = "gray"), plot.title("found mask"), plot.xticks([]), plot.yticks([])
-                plot.subplot(313), plot.imshow(show_img), plot.title("found contour: {}".format(match)), plot.xticks([]), plot.yticks([])
-                plot.show()
+        if verbose and img.shape[0] == 200:
+            cv.destroyAllWindows()
+            show_img = deepcopy(img)
+            show_img = cv.cvtColor(show_img, cv.COLOR_GRAY2BGR)
+            cv.drawContours(show_img, [best_contour], 0, (0,255,0), 1)
+            """ cv.imshow("{}".format(match), show_img)
+            if cv.waitKey(0) == 119:
+                cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/small_staple.jpg", best_mask)    """             
+            plot.subplot(311), plot.imshow(comparator, cmap = "gray"), plot.title("comparator"), plot.xticks([]), plot.yticks([])
+            plot.subplot(312), plot.imshow(work_mask, cmap = "gray"), plot.title("found mask"), plot.xticks([]), plot.yticks([])
+            plot.subplot(313), plot.imshow(show_img), plot.title("found contour: {}".format(match)), plot.xticks([]), plot.yticks([])
+            plot.show()
     if verbose:
         print("deviation for best match at: {}%\nnumber of best matches: {}".format(float(best_match)*100, i))
     if not best_contour is None:
-        return True, best_contour, best_mask
+        show_img = cv.cvtColor(deepcopy(img), cv.COLOR_GRAY2BGR)
+        cv.drawContours(show_img, [best_contour], 0, (0,255,0), 1)
+        if verbose:
+            plot.subplot(111), plot.imshow(show_img), plot.title("found contour: {}".format(match)), plot.xticks([]), plot.yticks([])
+            plot.show()
+        return True, best_contour, best_mask, show_img
     else:
-        return False, None, None
+        return False, None, None, None
 
 def sortkey_first(x):
     return x[0]
+
+def contour_image(cnt, img):
+    if len(img.shape) <= 2:
+        img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+    return cv.drawContours(img, [cnt], 0, (0,255,0), 1)
 
 def find_matches(img, comparator, maxL=1280.0, minL=0.0):
     if len(img.shape) > 2:
@@ -130,23 +143,16 @@ def find_matches(img, comparator, maxL=1280.0, minL=0.0):
         work_mask = create_box_mask(c, img.shape)
         match = cv.matchShapes(comparator, work_mask, 1, 0.0)
         arcL = cv.arcLength(create_box_contour(c), True)
+        cnt_img = contour_image(c, deepcopy(img))
         if arcL < maxL and arcL > minL and match < match_thresh:
             if verbose:
                 print(arcL)
-            best_matches.append([match,create_box_contour(c), deepcopy(work_mask)])
-    if verbose:
-        print("max deviation for matches at: {}%\nnumber of matches: {}".format(match_thresh*100, len(best_matches)))
-        cnt_imgs = list()
-        best_matches.sort(key=sortkey_first)
-        i = 1
-        for m in best_matches:
-            save_img = cv.cvtColor(deepcopy(img), cv.COLOR_GRAY2BGR)
-            cv.drawContours(save_img, [m[1]], 0, (0,255,0), 0)
-            cnt_imgs.append(save_img)
-            img_place = int("{}1{}".format(len(best_matches), i))
-            i+=1
-            plot.subplot(img_place), plot.imshow(save_img), plot.title("{}%".format(m[0]*100)), plot.xticks([]), plot.yticks([])
-        plot.show()
+            best_matches.append([match,create_box_contour(c), deepcopy(work_mask), deepcopy(cnt_img)])
+    best_matches.sort(key=sortkey_first)
+    #if verbose:
+    print("max deviation for matches at: {}%\n\n".format(match_thresh*100))
+    print("number of matches: {}".format(len(best_matches)))
+    print("deviation for best match at {}%".format(best_matches[0][0]))
     if len(best_matches) > 0:
         return True, best_matches
     else:
@@ -159,25 +165,23 @@ def detect_staple(img):
         cmp_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/small_staple.jpg", 0)
         maxL = 50.0
         minL = 20.0
+        success, found_matches = find_matches(img, cmp_mask, maxL=maxL, minL=minL)
+        if not success:
+            print("cannot find any staple")
+            return False, img, None
+        return success, found_matches
     elif img.shape[0] == 200:
         cmp_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/staple1.jpg", 0)
         maxL = 120.0
         minL = 60.0
+        success, found_contour, best_mask, cnt_img = find_match(img, cmp_mask, maxL=maxL, minL=minL)
+        if not success:
+            print("cannot find any staple")
+            return False, img, None
+        return success, found_contour, cnt_img
     else:
         print("given image has wrong resolution. Please provide a picture with following format: 640x400")
-        return False, img
-    success, found_contour = find_matches(img, cmp_mask, maxL=maxL, minL=minL)[:2]
-    if not success:
-        print("cannot find any staple")
-        return False, img
-    img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
-    print(found_contour)
-    cv.drawContours(img, [found_contour], 0, (0,255,0), 2)
-    if verbose:
-        plot.subplot(211), plot.imshow(cmp_mask, cmap = "gray"), plot.title("comparator"), plot.xticks([]), plot.yticks([])
-        plot.subplot(212), plot.imshow(img), plot.title("found staple"), plot.xticks([]), plot.yticks([])
-        plot.show()
-    return True, found_contour
+        return False, img, None
 
 
 def detect_paper(img):
@@ -197,10 +201,10 @@ def detect_paper(img):
     workplate_mask = cv.erode(workplate_mask, erode_kernel, iterations=1)
     minus_background = cv.bitwise_and(img, workplate_mask)
     #find document and subtract workplate 
-    success, paper_cnt, paper_mask = find_match(minus_background, paper_mask)
+    success, paper_cnt, paper_mask, cnt_img = find_match(minus_background, paper_mask)
     if not success:
         print("cannot find document... please rearrange on workplate")
-        return False, img
+        return False, img, None
     paper_mask = cv.erode(paper_mask, erode_kernel, iterations=1)
     minus_workplate = cv.bitwise_and(img, paper_mask)
     #create ROI as mask and apply to image
@@ -212,23 +216,26 @@ def detect_paper(img):
         plot.subplot(413), plot.imshow(minus_workplate, cmap = "gray"), plot.title("subtracted workplate"), plot.xticks([]), plot.yticks([])
         plot.subplot(414), plot.imshow(only_rim, cmap = "gray"), plot.title("only paper rim"), plot.xticks([]), plot.yticks([])
         plot.show()
-    return True, only_rim
+    return True, only_rim, cnt_img
 
 def mask_window(img, gripper_action_point):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     mask = np.zeros(img.shape, np.uint8)
-    field = 60
-    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]-field), 255, -1)
+    field = 50
+    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+(field)), (gripper_action_point[0]+field, gripper_action_point[1]-(field/10)), 255, -1)
     img = cv.bitwise_and(img, mask)
-    """ plot.subplot(211), plot.imshow(mask, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
-    plot.subplot(212), plot.imshow(img, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
-    plot.show() """
+    if verbose:
+        plot.subplot(211), plot.imshow(mask, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
+        plot.subplot(212), plot.imshow(img, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
+        plot.show()
     return img
 
 def distance_to_point(point, gripper_action_point, arm_z):
     factor = -9530.9 * arm_z + 1949.7
     distance_x = (point[0] - gripper_action_point[0]) / factor
     distance_y = -(point[1] - gripper_action_point[1]) / factor
+    print distance_x
+    print distance_y
     return (distance_x, distance_y)
 
 

@@ -50,6 +50,8 @@ paper_pose = Pose(
     )
 )
 
+approvement_height = -0.2
+
 """ Paper1280:
 position: 
   x: 0.576751688976
@@ -84,15 +86,15 @@ commands = {
 
 def mark_staple(arm, box_cnt):
     #Bedenken: Die übergebene Kontur ist abhängig von der Pose, in der sie aufgenommen wurde. Für mehr Robustheit diese Pose auch speichern und mit übergeben.
-    mainL, secL, angle, mainline_endpoint = detector.get_box_info(box_cnt)
-    startpoint_distance = detector.distance_to_point(box_cnt[0], arm.cam.get_action_point(), arm._current_pose.position.z)
-    endpoint_distance = detector.distance_to_point(box_cnt[mainline_endpoint], arm.cam.get_action_point(), arm._current_pose.position.z)
+    mainline_endpoint = detector.get_box_info(box_cnt)[3]
+    startpoint_distance = detector.distance_to_point(box_cnt[0], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
+    endpoint_distance = detector.distance_to_point(box_cnt[mainline_endpoint], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
     startpose = arm_class.alter_pose_inc(arm._current_pose, posx=startpoint_distance[0], posy=startpoint_distance[1])
     endpose = arm_class.alter_pose_inc(arm._current_pose, posx=endpoint_distance[0], posy=endpoint_distance[1])
-    endpose = arm_class.alter_pose_abs(endpose, posz=-0.13)
+    endpose = arm_class.alter_pose_abs(endpose, posz=-0.12)
     if not arm.move_precise(startpose):
         return False
-    startpose = arm_class.alter_pose_abs(startpose, posz=-0.13)
+    startpose = arm_class.alter_pose_abs(startpose, posz=-0.12)
     if not arm.move_direct(startpose):
         return False
     if not arm.move_to_pose(endpose):
@@ -100,8 +102,64 @@ def mark_staple(arm, box_cnt):
     retreat = arm_class.alter_pose_inc(endpose, posz=0.2)
     if not arm.move_to_pose(retreat):
         return False
+    return True
     
+def approve_matches(arm, matches, match_pose):
+    prove_poses = list()
+    for m in matches:
+        """ arm.cam.set_img(m[3])
+        time.sleep(3) """
+        staple_distance = detector.distance_to_point(m[1][0], arm.cam.get_action_point(), arm._current_pose.position.z)
+        prove_poses.append(arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1]+0.01))
+    for p in prove_poses:
+        if not arm.move_to_pose(arm_class.alter_pose_abs(p, arm._verbose, posz=approvement_height)):
+            return False
+        window(arm)
+        time.sleep(2)
+        #small_roi(arm)
+        #time.sleep(1)
+        success, found_match, cnt_img = detector.detect_staple(deepcopy(arm.cam._snapshot))
+        inp = raw_input("write?")
+        if inp == "w":
+            arm.cam.write_img(arm.cam._snapshot)
+        if success:
+            arm.cam.set_img(cnt_img)
+            print("found it")
+            arm.cam.write_img(cnt_img)
+            window(arm)
+            """ if not mark_staple(arm, found_match):
+                return False
+            return True """
+        else:
+            window(arm)    
+    print("no staple found")
 
+def window(arm):
+    if not arm.cam.windowed:
+        arm.cam.controller.resolution = (320, 200)
+        arm.cam.controller.window = (600, 200)
+        arm.cam.windowed = True
+        arm.cam.update_snapshot = True
+    else:
+        arm.cam.controller.window = (320, 200)
+        arm.cam.controller.resolution = (640,400)
+        arm.cam.windowed = False
+        arm.cam.update_snapshot = True
+
+def small_roi(arm):
+    arm.cam._snapshot = detector.mask_window(deepcopy(arm.cam._snapshot), arm.cam.get_action_point())
+
+def full_run(arm):
+    arm.move_to_pose(arm_class.alter_pose_inc(deepcopy(paper_pose), posz=0.1))
+    arm.move_precise(paper_pose)
+    arm.cam.update_snapshot = True
+    time.sleep(0.2)
+    paper_success, only_rim, cnt_img = detector.detect_paper(deepcopy(arm.cam._snapshot))
+    if paper_success:
+        arm.cam.set_img(only_rim)
+        staple_success, matches = detector.detect_staple(only_rim)
+        if staple_success:
+            approve_matches(arm, matches, deepcopy(arm._current_pose))
 
 def main():
     # Argument Parsing
@@ -138,14 +196,7 @@ def main():
         elif commando == "write":
             cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rename_me.jpg", arm.cam._img)
         elif commando == "window":
-            if not arm.cam.windowed:
-                arm.cam.controller.resolution = (320, 200)
-                arm.cam.controller.window = (600, 200)
-                arm.cam.windowed = True
-            else:
-                arm.cam.controller.window = (320, 200)
-                arm.cam.controller.resolution = (640,400)
-                arm.cam.windowed = False
+            window(arm)
         elif commando == "exposure":
             cmd_param = raw_input("Enter value (0-100): ")
             arm.cam.controller.exposure = int(cmd_param)
@@ -169,21 +220,19 @@ def main():
             arm.cam.controller.gain = int(cmd_param)
         elif commando == "find":
             if not arm.cam.windowed:
-                paper_success, only_rim = detector.detect_paper(deepcopy(arm.cam._snapshot))
+                paper_success, only_rim, cnt_img = detector.detect_paper(deepcopy(arm.cam._snapshot))
                 if paper_success:
-                    staple_success, contour = detector.detect_staple(only_rim)
+                    arm.cam.set_img(cnt_img)
+                    staple_success, matches, cnt_imgs = detector.detect_staple(only_rim)
                     if staple_success:
-                        staple_distance = detector.distance_to_point(contour[0], arm.cam.get_action_point(), arm._current_pose.position.z)
-                        staple_pose = arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1])
-                        arm.move_to_pose(staple_pose)
-                        print("please approach to enhance accuracy")
-                        ghi_cnt = contour
-                        print ghi_cnt
+                        arm.cam.set_img(cnt_imgs)
+                        approve_matches(arm, matches, deepcopy(arm._current_pose))
             else:
-                success, contour = detector.detect_staple(deepcopy(arm.cam._snapshot))
+                success, contour, cnt_img = detector.detect_staple(deepcopy(arm.cam._snapshot))
                 if success:
-                        ghi_cnt = contour
-                        print ghi_cnt
+                    arm.cam.set_img(cnt_img)
+                    ghi_cnt = contour
+                    print ghi_cnt
         elif commando == "pen":
             raw_input("Press Enter to grab pen...")
             time.sleep(5)
@@ -192,6 +241,8 @@ def main():
             arm.cam._snapshot = detector.mask_window(deepcopy(arm.cam._snapshot), arm.cam.get_action_point())
         elif commando == "mark":
             mark_staple(arm, ghi_cnt)
+        elif commando == "run":
+            full_run(arm)
         elif commando == "quit":
             print("resetting camera settings")
             arm.cam.controller.resolution = (640, 400)
