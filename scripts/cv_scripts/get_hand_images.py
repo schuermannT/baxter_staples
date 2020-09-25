@@ -83,6 +83,7 @@ commands = {
 }
 
 def mark_staple(arm, box_cnt):
+    #Bedenken: Die übergebene Kontur ist abhängig von der Pose, in der sie aufgenommen wurde. Für mehr Robustheit diese Pose auch speichern und mit übergeben.
     mainL, secL, angle, mainline_endpoint = detector.get_box_info(box_cnt)
     startpoint_distance = detector.distance_to_point(box_cnt[0], arm.cam.get_action_point(), arm._current_pose.position.z)
     endpoint_distance = detector.distance_to_point(box_cnt[mainline_endpoint], arm.cam.get_action_point(), arm._current_pose.position.z)
@@ -176,16 +177,21 @@ def main():
                         staple_pose = arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1])
                         arm.move_to_pose(staple_pose)
                         print("please approach to enhance accuracy")
+                        ghi_cnt = contour
+                        print ghi_cnt
             else:
                 success, contour = detector.detect_staple(deepcopy(arm.cam._snapshot))
                 if success:
-                        mark_staple(arm, contour)
+                        ghi_cnt = contour
+                        print ghi_cnt
         elif commando == "pen":
             raw_input("Press Enter to grab pen...")
             time.sleep(5)
             arm._gripper.close()
         elif commando == "roi":
             arm.cam._snapshot = detector.mask_window(deepcopy(arm.cam._snapshot), arm.cam.get_action_point())
+        elif commando == "mark":
+            mark_staple(arm, ghi_cnt)
         elif commando == "quit":
             print("resetting camera settings")
             arm.cam.controller.resolution = (640, 400)
@@ -194,7 +200,7 @@ def main():
             arm.cam.controller.white_balace_red = arm.cam.controller.CONTROL_AUTO
             arm.cam.controller.white_balace_green = arm.cam.controller.CONTROL_AUTO
             arm.cam.controller.white_balace_blue = arm.cam.controller.CONTROL_AUTO
-            arm.move_precise(arm_class.alter_pose_inc(arm._current_pose, posz=0.1))
+            arm.move_to_pose(arm_class.alter_pose_inc(arm._current_pose, posz=0.1))
             arm.simple_failsafe()
             break
         else:

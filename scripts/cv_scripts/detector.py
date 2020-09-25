@@ -116,6 +116,42 @@ def find_match(img, comparator, maxL=1280.0, minL=0.0):
     else:
         return False, None, None
 
+def sortkey_first(x):
+    return x[0]
+
+def find_matches(img, comparator, maxL=1280.0, minL=0.0):
+    if len(img.shape) > 2:
+        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    edges = cv.Canny(img, 10, 100)
+    contours = cv.findContours(edges.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[1]
+    match_thresh = 0.15
+    best_matches = list()
+    for c in contours:
+        work_mask = create_box_mask(c, img.shape)
+        match = cv.matchShapes(comparator, work_mask, 1, 0.0)
+        arcL = cv.arcLength(create_box_contour(c), True)
+        if arcL < maxL and arcL > minL and match < match_thresh:
+            if verbose:
+                print(arcL)
+            best_matches.append([match,create_box_contour(c), deepcopy(work_mask)])
+    if verbose:
+        print("max deviation for matches at: {}%\nnumber of matches: {}".format(match_thresh*100, len(best_matches)))
+        cnt_imgs = list()
+        best_matches.sort(key=sortkey_first)
+        i = 1
+        for m in best_matches:
+            save_img = cv.cvtColor(deepcopy(img), cv.COLOR_GRAY2BGR)
+            cv.drawContours(save_img, [m[1]], 0, (0,255,0), 0)
+            cnt_imgs.append(save_img)
+            img_place = int("{}1{}".format(len(best_matches), i))
+            i+=1
+            plot.subplot(img_place), plot.imshow(save_img), plot.title("{}%".format(m[0]*100)), plot.xticks([]), plot.yticks([])
+        plot.show()
+    if len(best_matches) > 0:
+        return True, best_matches
+    else:
+        return False, best_matches
+
 def detect_staple(img):
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -130,7 +166,7 @@ def detect_staple(img):
     else:
         print("given image has wrong resolution. Please provide a picture with following format: 640x400")
         return False, img
-    success, found_contour = find_match(img, cmp_mask, maxL=maxL, minL=minL)[:2]
+    success, found_contour = find_matches(img, cmp_mask, maxL=maxL, minL=minL)[:2]
     if not success:
         print("cannot find any staple")
         return False, img
@@ -197,11 +233,11 @@ def distance_to_point(point, gripper_action_point, arm_z):
 
 
 def main():
-    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_1.jpg", 0)
+    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_0.jpg", 0)
     success, only_rim = detect_paper(img)
-    """ if not success:
+    if not success:
         return False
-    detect_staple(only_rim) """
+    detect_staple(only_rim)
 
 
 if __name__ == "__main__":
