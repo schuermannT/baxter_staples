@@ -85,10 +85,10 @@ commands = {
 }
 
 def mark_staple(arm, box_cnt):
-    #Bedenken: Die übergebene Kontur ist abhängig von der Pose, in der sie aufgenommen wurde. Für mehr Robustheit diese Pose auch speichern und mit übergeben.
+    #Aktuelle Lösung für Versatz: Bei kleinen Bildern wird bei der Berechnung des Actions-Points die x-Koordinate modifiziert. Dies wird in distance_to_point rückgängig gemacht
     mainline_endpoint = detector.get_box_info(box_cnt)[3]
-    startpoint_distance = detector.distance_to_point(box_cnt[0], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
-    endpoint_distance = detector.distance_to_point(box_cnt[mainline_endpoint], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
+    startpoint_distance = detector.distance_to_point(box_cnt[0], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z, arm.cam.windowed)
+    endpoint_distance = detector.distance_to_point(box_cnt[mainline_endpoint], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z, arm.cam.windowed)
     startpose = arm_class.alter_pose_inc(arm._current_pose, posx=startpoint_distance[0], posy=startpoint_distance[1])
     endpose = arm_class.alter_pose_inc(arm._current_pose, posx=endpoint_distance[0], posy=endpoint_distance[1])
     endpose = arm_class.alter_pose_abs(endpose, posz=-0.12)
@@ -109,7 +109,7 @@ def approve_matches(arm, matches, match_pose):
     for m in matches:
         """ arm.cam.set_img(m[3])
         time.sleep(3) """
-        staple_distance = detector.distance_to_point(m[1][0], arm.cam.get_action_point(), arm._current_pose.position.z)
+        staple_distance = detector.distance_to_point(m[1][0], arm.cam.get_action_point(), arm._current_pose.position.z, arm.cam.windowed)
         prove_poses.append(arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1]+0.01))
     for p in prove_poses:
         if not arm.move_to_pose(arm_class.alter_pose_abs(p, arm._verbose, posz=approvement_height)):
@@ -160,6 +160,11 @@ def full_run(arm):
         staple_success, matches = detector.detect_staple(only_rim)
         if staple_success:
             approve_matches(arm, matches, deepcopy(arm._current_pose))
+        else:
+            #TODO: Ecken anfahren
+
+    else:
+        print("No document detectable. Please rearrange it on the workplate")
 
 def main():
     # Argument Parsing

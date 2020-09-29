@@ -230,9 +230,12 @@ def mask_window(img, gripper_action_point):
         plot.show()
     return img
 
-def distance_to_point(point, gripper_action_point, arm_z):
+def distance_to_point(point, gripper_action_point, arm_z, windowed):
     factor = -9530.9 * arm_z + 1949.7
-    distance_x = (point[0] - gripper_action_point[0]) / factor
+    if windowed:
+        distance_x = (point[0] - gripper_action_point[0] + 280) / factor
+    else:
+        distance_x = (point[0] - gripper_action_point[0]) / factor
     distance_y = -(point[1] - gripper_action_point[1]) / factor
     print distance_x
     print distance_y
