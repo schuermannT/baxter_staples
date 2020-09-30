@@ -212,12 +212,14 @@ class Arm(object):
                 print("Response Message:\n", resp )
                 print("moving %s arm..." %self._limb_name)
             self._limb.move_to_joint_positions(self._ik_solution)
+            time.sleep(1)                                                   #to make sure he really finished his movement and reached the pose
             self._current_pose = convert_to_pose(self._limb.endpoint_pose())
             if self.cam_wanted:
                 self.cam.update_z(self._current_pose.position.z)
             return True
         else:
             print ("INVALID POSE - No Valid Joint Solution Found.")
+            print("Given Pose:\n{}".format(pose))
         return False
 
     def move_precise(self, pose):

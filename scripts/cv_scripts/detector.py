@@ -127,27 +127,21 @@ def find_match(img, comparator, maxL=1280.0, minL=0.0):
 def sortkey_first(x):
     return x[0]
 
-def contour_image(cnt, img):
-    if len(img.shape) <= 2:
-        img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
-    return cv.drawContours(img, [cnt], 0, (0,255,0), 1)
-
 def find_matches(img, comparator, maxL=1280.0, minL=0.0):
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(img, 10, 100)
     contours = cv.findContours(edges.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[1]
-    match_thresh = 0.15
+    match_thresh = 0.10
     best_matches = list()
     for c in contours:
         work_mask = create_box_mask(c, img.shape)
         match = cv.matchShapes(comparator, work_mask, 1, 0.0)
         arcL = cv.arcLength(create_box_contour(c), True)
-        cnt_img = contour_image(c, deepcopy(img))
         if arcL < maxL and arcL > minL and match < match_thresh:
             if verbose:
                 print(arcL)
-            best_matches.append([match,create_box_contour(c), deepcopy(work_mask), deepcopy(cnt_img)])
+            best_matches.append([match,create_box_contour(c), deepcopy(work_mask)])
     best_matches.sort(key=sortkey_first)
     #if verbose:
     print("max deviation for matches at: {}%\n\n".format(match_thresh*100))
@@ -174,6 +168,7 @@ def detect_staple(img):
         cmp_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/staple1.jpg", 0)
         maxL = 120.0
         minL = 60.0
+        img = cv.GaussianBlur(img, (5,5), 0)
         success, found_contour, best_mask, cnt_img = find_match(img, cmp_mask, maxL=maxL, minL=minL)
         if not success:
             print("cannot find any staple")
@@ -222,7 +217,7 @@ def mask_window(img, gripper_action_point):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     mask = np.zeros(img.shape, np.uint8)
     field = 50
-    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+(field)), (gripper_action_point[0]+field, gripper_action_point[1]-(field/10)), 255, -1)
+    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]-field), 255, -1)
     img = cv.bitwise_and(img, mask)
     if verbose:
         plot.subplot(211), plot.imshow(mask, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
@@ -232,14 +227,14 @@ def mask_window(img, gripper_action_point):
 
 def distance_to_point(point, gripper_action_point, arm_z, windowed):
     factor = -9530.9 * arm_z + 1949.7
-    if windowed:
-        distance_x = (point[0] - gripper_action_point[0] + 280) / factor
-    else:
-        distance_x = (point[0] - gripper_action_point[0]) / factor
+    distance_x = (point[0] - gripper_action_point[0]) / factor
     distance_y = -(point[1] - gripper_action_point[1]) / factor
-    print distance_x
-    print distance_y
     return (distance_x, distance_y)
+
+def draw_cnt_on_img(cnt, img):
+    if len(img.shape) == 2:
+        img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+    return cv.drawContours(img, [cnt], 0, (0,255,0), 1)
 
 
 def main():
