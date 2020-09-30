@@ -211,7 +211,7 @@ def detect_paper(img):
         plot.subplot(413), plot.imshow(minus_workplate, cmap = "gray"), plot.title("subtracted workplate"), plot.xticks([]), plot.yticks([])
         plot.subplot(414), plot.imshow(only_rim, cmap = "gray"), plot.title("only paper rim"), plot.xticks([]), plot.yticks([])
         plot.show()
-    return True, only_rim, cnt_img
+    return True, only_rim, paper_cnt
 
 def mask_window(img, gripper_action_point):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -225,7 +225,7 @@ def mask_window(img, gripper_action_point):
         plot.show()
     return img
 
-def distance_to_point(point, gripper_action_point, arm_z, windowed):
+def distance_to_point(point, gripper_action_point, arm_z):
     factor = -9530.9 * arm_z + 1949.7
     distance_x = (point[0] - gripper_action_point[0]) / factor
     distance_y = -(point[1] - gripper_action_point[1]) / factor
