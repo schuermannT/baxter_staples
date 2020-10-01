@@ -35,17 +35,16 @@ class Cam(object):
             if self.update_snapshot:
                 self._snapshot = deepcopy(img)
                 self.update_snapshot = False
-                #cv.imshow("snapshot", self._snapshot)
                 self._update_snapshot_window = False
-                if self._init:
-                    #cv.setMouseCallback("snapshot", self.onMouse)
-                    self._img = deepcopy(img)
-                    self._init = False
             if self.arm_z < 5.0:
                 action_point = self.get_action_point()
                 cv.circle(img, action_point, 2, (0,0,255), -1)
             cv.imshow("live", img)
             cv.imshow("snapshot", self._snapshot)
+            if self._init:
+                cv.setMouseCallback("snapshot", self.onMouse)
+                self._img = deepcopy(img)
+                self._init = False
             cv.imshow("input image", self._img)
             cv.waitKey(1)
         except CvBridgeError as e:

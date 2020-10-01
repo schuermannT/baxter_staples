@@ -23,7 +23,7 @@ pose = Pose(
     position=Point(
         x=0.500,
         y=0.200,
-        z=-0.120,
+        z=-0.190,
     ),
     orientation=Quaternion(
         x=-0.000,
@@ -41,7 +41,7 @@ def main():
         '-v', '--verbose',
         action='store_const',
         const=True,
-        default=True,
+        default=False,
         help="displays debug information (default = False)"
     )
     parser.add_argument(
@@ -61,7 +61,7 @@ def main():
     arm = arm_class.Arm(args.limb, args.verbose, True)
     print("Init finished...")
 
-    arm.set_neutral()
+    arm.set_neutral(False)
     raw_input("Press Enter to grab pen...")
     for i in range(3):
         print("gripping in: {}".format(3-i))
