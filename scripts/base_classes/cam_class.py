@@ -55,8 +55,8 @@ class Cam(object):
             print("{},{}".format(x,y))
 
     def get_action_point(self):
-        display_y = 9842*np.float_power(self.arm_z, 3)+1071.3*np.square(self.arm_z)+224.15*self.arm_z+169.02 #<- polynomische Trendlinie 3. Ordnung; lineare Trendlinie: (362.83*self.arm_z)+177.55
-        display_x = -4815.8*np.float_power(self.arm_z, 3)-734.51*np.square(self.arm_z)-76.228*self.arm_z+377.23 #<- polynomische Trendlinie 3. Ordnung; lineare Trendlinie:(-102.02*self.arm_z)+374.46
+        display_y = 2748.1*np.float_power(self.arm_z, 3)-789.76*np.square(self.arm_z)+144.88*self.arm_z+166.8 #<- polynomiale Trendlinie 3. Ordnung; lineare Trendlinie: (362.83*self.arm_z)+177.55
+        display_x = -1719*np.float_power(self.arm_z, 3)+200.79*np.square(self.arm_z)-8.1584*self.arm_z+374.83 #<- polynomiale Trendlinie 3. Ordnung; lineare Trendlinie:(-102.02*self.arm_z)+374.46
         if self.windowed:
             display_x -= 280
         return (int(display_x),int(display_y))

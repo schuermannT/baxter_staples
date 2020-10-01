@@ -23,7 +23,7 @@ pose = Pose(
     position=Point(
         x=0.500,
         y=0.200,
-        z=-0.191,
+        z=-0.190,
     ),
     orientation=Quaternion(
         x=-0.700,

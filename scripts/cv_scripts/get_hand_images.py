@@ -51,7 +51,7 @@ paper_pose = Pose(
 )
 
 approvement_height = -0.15
-marking_height = -0.19
+marking_height = -0.191
 
 """ Paper1280:
 position: 
@@ -263,6 +263,8 @@ def main():
             mark_staple(arm, ghi_cnt)
         elif commando == "run":
             full_run(arm)
+        elif commando == "up":
+            arm.move_to_pose(arm_class.alter_pose_inc(arm._current_pose, arm._verbose, posz=0.15))
         elif commando == "quit":
             print("resetting camera settings")
             arm.cam.controller.resolution = (640, 400)
