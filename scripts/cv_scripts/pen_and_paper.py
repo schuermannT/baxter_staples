@@ -23,13 +23,13 @@ pose = Pose(
     position=Point(
         x=0.500,
         y=0.200,
-        z=-0.190,
+        z=-0.191,
     ),
     orientation=Quaternion(
-        x=-0.000,
-        y=0.999,
+        x=-0.700,
+        y=0.700,
         z=0.000,
-        w=0.000,
+        w=0.000
     ),
 )
 
@@ -79,7 +79,7 @@ def main():
         arm.simple_failsafe()
         return False
     print(arm._current_pose)
-    for i in range(10):
+    for i in range(20):
         if not arm.move_to_pose(arm_class.alter_pose_inc(pose, args.verbose, posz=(i*0.02))):
             arm.simple_failsafe()
             return False

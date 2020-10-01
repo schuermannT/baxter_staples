@@ -64,10 +64,11 @@ def get_box_info(box_cnt):
     l03 = np.sqrt(np.square(box_cnt[3][0] - box_cnt[0][0]) + np.square(box_cnt[3][1] - box_cnt[0][1]))
     l01 = np.sqrt(np.square(box_cnt[1][0] - box_cnt[0][0]) + np.square(box_cnt[1][1] - box_cnt[0][1]))
     ankathete = float(box_cnt[3][1] - box_cnt[0][1])
-    if ankathete == 0:
-        return 0, None, None, None
-    gkdak = float(box_cnt[3][0] - box_cnt[0][0]) / ankathete
-    angle03 = np.arctan(gkdak)+(np.pi/2)
+    if ankathete != 0.0:
+        gkdak = float(box_cnt[3][0] - box_cnt[0][0]) / ankathete
+        angle03 = np.arctan(gkdak)+(np.pi/2)
+    else:
+        angle03 = 0.0
     if l03 > l01 :
         main_length = l03
         secondary_length = l01
@@ -217,7 +218,7 @@ def mask_window(img, gripper_action_point):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     mask = np.zeros(img.shape, np.uint8)
     field = 60
-    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]-field), 255, -1)
+    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]), 255, -1)
     img = cv.bitwise_and(img, mask)
     if verbose:
         plot.subplot(211), plot.imshow(mask, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
