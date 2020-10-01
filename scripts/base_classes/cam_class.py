@@ -55,14 +55,14 @@ class Cam(object):
             print("{},{}".format(x,y))
 
     def get_action_point(self):
-        display_y = (163.15*self.arm_z)+162.13
-        display_x = (-47.03*self.arm_z)+379.19
+        display_y = (362.83*self.arm_z)+177.55
+        display_x = (-102.02*self.arm_z)+374.46
         if self.windowed:
             display_x -= 280
         return (int(display_x),int(display_y))
 
     def action_point(self, z):
-        display_y = (163.15*z)+162.13
+        display_y = (163.15*z)+162.13       #Errechnet durch Mittelwert bei 3 Messdurchläufen und Trendlinie über diese (siehe Greiferhöhe zu Aktionspunkt.xlsx). Trifft nur auf Stifthalterung_MKII zu
         display_x = (-47.03*z)+379.19
         if self.windowed:
             display_x -= 280
