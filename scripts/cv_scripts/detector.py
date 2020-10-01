@@ -132,7 +132,7 @@ def find_matches(img, comparator, maxL=1280.0, minL=0.0):
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(img, 10, 100)
     contours = cv.findContours(edges.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[1]
-    match_thresh = 0.10
+    match_thresh = 0.15
     best_matches = list()
     for c in contours:
         work_mask = create_box_mask(c, img.shape)
@@ -216,7 +216,7 @@ def detect_paper(img):
 def mask_window(img, gripper_action_point):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     mask = np.zeros(img.shape, np.uint8)
-    field = 50
+    field = 60
     cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]-field), 255, -1)
     img = cv.bitwise_and(img, mask)
     if verbose:

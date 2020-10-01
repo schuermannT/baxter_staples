@@ -51,7 +51,7 @@ paper_pose = Pose(
 )
 
 approvement_height = -0.15
-marking_height = -0.18
+marking_height = -0.19
 
 """ Paper1280:
 position: 
@@ -131,9 +131,9 @@ def approve_matches(arm, matches, match_pose):
         small_roi(arm)
         time.sleep(1)
         success, found_match, cnt_img = detector.detect_staple(deepcopy(arm.cam._snapshot))
-        inp = raw_input("write?")
+        """ inp = raw_input("write?")
         if inp == "w":
-            arm.cam.write_img(arm.cam._snapshot)
+            arm.cam.write_img(arm.cam._snapshot) """
         if success:
             arm.cam.set_img(cnt_img)
             print("found it")
