@@ -51,29 +51,7 @@ paper_pose = Pose(
 )
 
 approvement_height = -0.15
-marking_height = -0.191
-
-""" Paper1280:
-position: 
-  x: 0.576751688976
-  y: 0.330536543527
-  z: -0.07204134598
-orientation: 
-  x: -0.703464896814
-  y: 0.710467625684
-  z: 0.0117420328291
-  w: -0.0153302469344 
-
-Paper640:
-position: 
-  x: 0.639653824451
-  y: 0.333314267116
-  z: -0.0556015894701
-orientation: 
-  x: -0.698709839035
-  y: 0.715198454438
-  z: -0.00254755593687
-  w: 0.0170071033134"""
+marking_height = -0.2
 
 commands = {
     'update'    : "updates and shows the snapshot",
@@ -94,10 +72,10 @@ def mark_staple(arm, box_cnt):
     print("mainline_endpoint:{}".format(mainline_endpoint))
     startpoint_distance = detector.distance_to_point(box_cnt[0], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
     endpoint_distance = detector.distance_to_point(box_cnt[mainline_endpoint], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
-    startpose = arm_class.alter_pose_inc(arm._current_pose, posx=startpoint_distance[0], posy=startpoint_distance[1])
+    startpose = arm_class.alter_pose_inc(arm._current_pose, posx=startpoint_distance[0], posy=startpoint_distance[1], posz=-0.03)
     endpose = arm_class.alter_pose_inc(arm._current_pose, posx=endpoint_distance[0], posy=endpoint_distance[1])
     endpose = arm_class.alter_pose_abs(endpose, posz=marking_height)
-    print("current:\n{}\nstartpose:\n{}\nendpose:\n{}\n".format(arm._current_pose, startpose, endpose))
+    print("current pose:\n{}\nstartpose:\n{}\nendpose:\n{}\n".format(arm._current_pose, startpose, endpose))
     if not arm.move_precise(startpose):
         return False
     startpose = arm_class.alter_pose_abs(startpose, posz=marking_height)
@@ -105,6 +83,7 @@ def mark_staple(arm, box_cnt):
         return False
     if not arm.move_to_pose(endpose):
         return False
+    print("marked staple...\ncurrent pose:\n{}\nstartpose:\n{}\nendpose:\n{}\n".format(arm._current_pose, startpose, endpose))
     """ retreat = arm_class.alter_pose_inc(endpose, posz=0.2)
     if not arm.move_to_pose(retreat):
         return False """
@@ -144,7 +123,6 @@ def approve_matches(arm, matches, match_pose):
             if not arm.move_to_pose(arm_class.alter_pose_inc(arm._current_pose, arm._verbose, posz=0.1)):
                 return False   
     print("no staple found")
-    #TODO: Flag setzen, dass nichts gefunden wurde und jetzt die Ecken abgefahren werden sollen.
 
 def window(arm):
     if not arm.cam.windowed:
@@ -165,6 +143,7 @@ def full_run(arm):
     if arm.cam.windowed:
         window(arm)
     arm.move_to_pose(paper_pose)
+    time.sleep(1)
     arm.cam.update_snapshot = True
     time.sleep(0.2)
     paper_success, only_rim, paper_cnt = detector.detect_paper(deepcopy(arm.cam._snapshot))
@@ -174,11 +153,6 @@ def full_run(arm):
         staple_success, matches = detector.detect_staple(only_rim)
         if staple_success:
             approve_matches(arm, matches, deepcopy(arm._current_pose))
-        else:
-            for c in paper_cnt:
-                corner_distance = detector.distance_to_point(c[1][0], arm.cam.get_action_point(), arm._current_pose.position.z)
-                arm.move_to_pose(arm_class.alter_pose_inc(arm._current_pose, posx=corner_distance[0], posy=corner_distance[1]+0.05))
-            #TODO: Bilder maskieren, sodass kein Text zu sehen ist.
     else:
         print("No document detectable. Please rearrange it on the workplate")
 

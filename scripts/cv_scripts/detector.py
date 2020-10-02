@@ -229,13 +229,13 @@ def mask_window(img, gripper_action_point):
 def distance_to_point(point, gripper_action_point, arm_z):
     factor = -9530.9 * arm_z + 1949.7
     distance_x = (point[0] - gripper_action_point[0]) / factor
-    distance_y = (-(point[1] - gripper_action_point[1]) / factor) - 0.008 #TODO: das funktioniert zwar bei approve_matches, verursacht aber Probleme bei mark_staple
+    distance_y = (-(point[1] - gripper_action_point[1]) / factor) - 0.004
     return (distance_x, distance_y)
 
 def draw_cnt_on_img(cnt, img):
     if len(img.shape) == 2:
         img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
-    return cv.drawContours(img, [cnt], 0, (0,255,0), 1)
+    return cv.drawContours(img, [cnt], 0, (0,0,255), 1)
 
 
 def main():
