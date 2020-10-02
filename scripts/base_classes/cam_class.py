@@ -73,8 +73,9 @@ class Cam(object):
 
     def set_img(self, img):
         self._img = img
+        self.write_img(img)
 
     def write_img(self, img):
-        cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/pic_{}.jpg".format(self.ix), img)
+        cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/bilder/pic_{}.jpg".format(self.ix), img)
         self.ix+=1
  

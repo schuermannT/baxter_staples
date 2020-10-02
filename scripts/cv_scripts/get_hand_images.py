@@ -67,25 +67,15 @@ def mark_staple(arm, box_cnt):
     print("marking staple")
     arm.cam.set_img(detector.draw_cnt_on_img(box_cnt, arm.cam._snapshot))
     time.sleep(2)
-    mainline_endpoint = detector.get_box_info(box_cnt)[3]
-    print("mainline_endpoint:{}".format(mainline_endpoint))
-    startpoint_distance = detector.distance_to_point(box_cnt[0], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
-    endpoint_distance = detector.distance_to_point(box_cnt[mainline_endpoint], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
-    startpose = arm_class.alter_pose_inc(arm._current_pose, posx=startpoint_distance[0], posy=startpoint_distance[1], posz=-0.03)
-    endpose = arm_class.alter_pose_inc(arm._current_pose, posx=endpoint_distance[0], posy=endpoint_distance[1])
-    endpose = arm_class.alter_pose_abs(endpose, posz=marking_height)
-    print("current pose:\n{}\nstartpose:\n{}\nendpose:\n{}\n".format(arm._current_pose, startpose, endpose))
-    if not arm.move_precise(startpose):
+    point_distance = detector.distance_to_point(box_cnt[0], arm.cam.action_point(arm._current_pose.position.z), arm._current_pose.position.z)
+    markingpose = arm_class.alter_pose_inc(arm._current_pose, posx=point_distance[0], posy=point_distance[1])
+    markingpose = arm_class.alter_pose_abs(markingpose, arm._verbose, posz=marking_height)
+    print("current pose:\n{}\nmarkingpose:\n{}\n".format(arm._current_pose, markingpose))
+    if not arm.move_direct(markingpose):
         return False
-    startpose = arm_class.alter_pose_abs(startpose, posz=marking_height)
-    if not arm.move_direct(startpose):
-        return False
-    if not arm.move_to_pose(endpose):
-        return False
-    print("marked staple...\ncurrent pose:\n{}\nstartpose:\n{}\nendpose:\n{}\n".format(arm._current_pose, startpose, endpose))
-    """ retreat = arm_class.alter_pose_inc(endpose, posz=0.2)
+    retreat = arm_class.alter_pose_inc(arm._current_pose, posz=0.1)
     if not arm.move_to_pose(retreat):
-        return False """
+        return False
     return True
 
 def approve_matches(arm, matches, match_pose):
