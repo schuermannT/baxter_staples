@@ -81,7 +81,6 @@ def get_box_info(box_cnt):
         mainline_endpoint = 1
     return main_length, secondary_length, angle, mainline_endpoint
 
-
 def find_match(img, comparator, maxL=1280.0, minL=0.0):
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)

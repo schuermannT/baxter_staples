@@ -64,7 +64,6 @@ commands = {
 }
 
 def mark_staple(arm, box_cnt):
-    #Aktuelle Lösung für Versatz: Bei kleinen Bildern wird bei der Berechnung des Actions-Points die x-Koordinate modifiziert. Dies wird in distance_to_point rückgängig gemacht
     print("marking staple")
     arm.cam.set_img(detector.draw_cnt_on_img(box_cnt, arm.cam._snapshot))
     time.sleep(2)
@@ -88,7 +87,7 @@ def mark_staple(arm, box_cnt):
     if not arm.move_to_pose(retreat):
         return False """
     return True
-    
+
 def approve_matches(arm, matches, match_pose):
     prove_poses = list()
     contour_img = deepcopy(arm.cam._snapshot)
