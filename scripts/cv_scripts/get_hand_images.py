@@ -50,6 +50,20 @@ paper_pose = Pose(
     )
 )
 
+pick_paper_pose = Pose(
+    position=Point(
+        x=0.660,
+        y=-0.150,
+        z=-0.173
+    ),
+    orientation=Quaternion(
+        x=0.000,
+        y=0.999,
+        z=0.000,
+        w=0.000
+    )
+)
+
 approvement_height = -0.15
 marking_height = -0.2
 
@@ -128,7 +142,7 @@ def window(arm):
 def small_roi(arm):
     arm.cam._snapshot = detector.mask_window(deepcopy(arm.cam._snapshot), arm.cam.get_action_point())
 
-def full_run(arm):
+def find_staple(arm):
     if arm.cam.windowed:
         window(arm)
     arm.move_to_pose(paper_pose)
@@ -145,6 +159,19 @@ def full_run(arm):
     else:
         print("No document detectable. Please rearrange it on the workplate")
 
+def full_run(left):
+    right = arm_class.Arm('right', left._verbose)
+    left.set_neutral(False)
+    right.set_neutral(False)
+    #get document
+    if not right.pick(pick_paper_pose):
+        return False
+    if not right.place_paper():
+        return False
+    #detect and mark staple
+    find_staple(left)
+
+
 def main():
     # Argument Parsing
     arg_fmt = argparse.RawDescriptionHelpFormatter
@@ -156,13 +183,6 @@ def main():
         default=False,
         help="displays debug information (default = False)"
     )
-    parser.add_argument(
-        '-l', '--limb',
-        choices=['left', 'right'],
-        #required=True,
-        default='left',
-        help='the limb to run the measurements on'
-    )
     args = parser.parse_args(rospy.myargv()[1:])
 
     #Init
@@ -170,7 +190,7 @@ def main():
     time.sleep(0.5)
     print("--- Ctrl-D stops the program ---")
     print("Init started...")
-    arm = arm_class.Arm(args.limb, args.verbose, True)
+    arm = arm_class.Arm('left', args.verbose, True)
     print("Init finished...")
 
     while(True):
