@@ -54,7 +54,7 @@ pick_paper_pose = Pose(
     position=Point(
         x=0.660,
         y=-0.150,
-        z=-0.173
+        z=-0.180
     ),
     orientation=Quaternion(
         x=0.000,
@@ -65,7 +65,7 @@ pick_paper_pose = Pose(
 )
 
 approvement_height = -0.15
-marking_height = -0.2
+marking_height = -0.202
 
 commands = {
     'update'    : "updates and shows the snapshot",
@@ -87,7 +87,7 @@ def mark_staple(arm, box_cnt):
     print("current pose:\n{}\nmarkingpose:\n{}\n".format(arm._current_pose, markingpose))
     if not arm.move_direct(markingpose):
         return False
-    retreat = arm_class.alter_pose_inc(arm._current_pose, posz=0.1)
+    retreat = arm_class.alter_pose_inc(arm._current_pose, posz=0.05)
     if not arm.move_to_pose(retreat):
         return False
     return True
@@ -165,11 +165,14 @@ def full_run(left):
     right.set_neutral(False)
     #get document
     if not right.pick(pick_paper_pose):
+        right.simple_failsafe()
         return False
     if not right.place_paper():
         return False
+    right.set_neutral()
     #detect and mark staple
     find_staple(left)
+    left.set_neutral(False)
 
 
 def main():
@@ -223,7 +226,9 @@ def main():
             cmd_param = raw_input("Enter value (0-79): ")
             arm.cam.controller.gain = int(cmd_param)
         elif commando == "find":
-            if not arm.cam.windowed:
+            find_staple(arm)
+            arm.set_neutral(False)
+            """ if not arm.cam.windowed:
                 paper_success, only_rim, cnt_img = detector.detect_paper(deepcopy(arm.cam._snapshot))
                 if paper_success:
                     arm.cam.set_img(cnt_img)
@@ -235,7 +240,7 @@ def main():
                 if success:
                     arm.cam.set_img(cnt_img)
                     ghi_cnt = contour
-                    print ghi_cnt
+                    print ghi_cnt """
         elif commando == "pen":
             raw_input("Press Enter to grab pen...")
             time.sleep(5)

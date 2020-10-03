@@ -143,11 +143,10 @@ def find_matches(img, comparator, maxL=1280.0, minL=0.0):
                 print(arcL)
             best_matches.append([match,create_box_contour(c), deepcopy(work_mask)])
     best_matches.sort(key=sortkey_first)
-    #if verbose:
-    print("max deviation for matches at: {}%\n\n".format(match_thresh*100))
-    print("number of matches: {}".format(len(best_matches)))
-    print("deviation for best match at {}%".format(best_matches[0][0]))
     if len(best_matches) > 0:
+        print("max deviation for matches at: {}%\n\n".format(match_thresh*100))
+        print("number of matches: {}".format(len(best_matches)))
+        print("deviation for best match at {}%".format(best_matches[0][0]))
         return True, best_matches
     else:
         return False, best_matches
@@ -217,7 +216,7 @@ def mask_window(img, gripper_action_point):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     mask = np.zeros(img.shape, np.uint8)
     field = 60
-    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]), 255, -1)
+    cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]-10), 255, -1)
     img = cv.bitwise_and(img, mask)
     if verbose:
         plot.subplot(211), plot.imshow(mask, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])

@@ -23,5 +23,5 @@ staple_pose = {'position': Point(x=0.405, y=0.108, z=-0.204),
 
 pick_paper_pose = {'position': Point(x=0.660, y=-0.150, z=-0.173), 
                    'orientation': Quaternion(x=0.000, y=0.999, z=0.000, w=0.000)}
-place_paper_pose = {'position': Point(x=0.413, y=0.137, z=-0.18), 
+place_paper_pose = {'position': Point(x=0.420, y=0.137, z=-0.18), 
                     'orientation': Quaternion(x=0.999, y=0.012, z=0.000, w=0.000)}

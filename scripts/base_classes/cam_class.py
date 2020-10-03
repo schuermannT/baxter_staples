@@ -39,13 +39,13 @@ class Cam(object):
             if self.arm_z < 5.0:
                 action_point = self.get_action_point()
                 cv.circle(img, action_point, 2, (0,0,255), -1)
-            cv.imshow("live", img)
-            cv.imshow("snapshot", self._snapshot)
+            cv.imshow("Live", img)
+            cv.imshow("Snapshot", self._snapshot)
             if self._init:
-                cv.setMouseCallback("snapshot", self.onMouse)
+                cv.setMouseCallback("Snapshot", self.onMouse)
                 self._img = deepcopy(img)
                 self._init = False
-            cv.imshow("input image", self._img)
+            cv.imshow("Highlight", self._img)
             cv.waitKey(1)
         except CvBridgeError as e:
             print("Bridge-Error: {}".format(e))
@@ -76,6 +76,6 @@ class Cam(object):
         self.write_img(img)
 
     def write_img(self, img):
-        cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/bilder/pic_{}.jpg".format(self.ix), img)
+        cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/bilder/08/pic_{}.jpg".format(self.ix), img)
         self.ix+=1
  
