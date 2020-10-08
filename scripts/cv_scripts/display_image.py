@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
+#-------------------------------------
+#Wird nicht mit abgegeben
+
 import cv2 as cv
 import sys
 

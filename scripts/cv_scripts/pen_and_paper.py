@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+
+"""
+A simple script to measure the relationship between the z axis value of the arm and the action point of it.
+
+The arm executes a gradual movement approaching a paper with attached pen to draw a point on it. 
+Afterwards the arm retreats gradually. At each step the user can click on the painted point on the "Snapshot" display to get the associated coordinates.
+
+In combination with the pose, the coordinates can be used to create a descriptive formula for the relationship between pixel coordinate and z axis value.
+For further information please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann".
+"""
+
 import argparse
 import sys
 import time
@@ -14,10 +25,10 @@ from geometry_msgs.msg import (
 )
 
 sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
-
 import arm_class
 import cam_class
 import baxter_interface
+
 
 pose = Pose(
     position=Point(
@@ -75,6 +86,7 @@ def main():
     if not arm.move_direct(pose):
         arm.simple_failsafe()
         return False
+    #draw point
     if not arm.move_to_pose(arm_class.alter_pose_inc(pose, args.verbose, posz=-0.01)):
         arm.simple_failsafe()
         return False

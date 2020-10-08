@@ -3,20 +3,26 @@
 import cv2 as cv
 import sys
 import numpy as np
-import matplotlib
-matplotlib.use('TKAgg')
-from matplotlib import pyplot as plot
 from copy import deepcopy
 
-verbose = False
+def create_rim(contour, mask, rim_width, verbose=False):
+    """
+    Modifies the given mask by a smaller version of the given contour to create a white rim zone in accordance to the given width.
 
-def create_rim(contour, mask, rim_width):
+        Parameters:
+            contour:    Contour of the document on which the rim shall be created
+            mask:       Mask of the document on which the rim shall be created
+            rim_width:  Width of the rim to be created
+            verbose:    Flag to print messages for debugging
+        Return:
+            mask:       Modified version of the given mask; None if rim is not creatable
+    """
     rect = cv.minAreaRect(contour)
     box = cv.boxPoints(rect)
     box = np.int0(box)
     main_length, sec_length, angle, mainline_endpoint = get_box_info(box)
     if main_length == 0:
-        return False, None
+        return None
     if verbose:
         print("main_length: {} sec_length: {} angle: {}".format(main_length, sec_length, angle))
     rim_corner_length = np.sqrt(np.square(main_length*(rim_width[1]/297.0)) + np.square(sec_length*(rim_width[0]/210.0)))
@@ -46,21 +52,55 @@ def create_rim(contour, mask, rim_width):
         rim_box[3][0] = box[3][0] - cols #top right col
         rim_box[3][1] = box[3][1] + rows #top right row
     cv.drawContours(mask, [rim_box], 0, 0, -1)
-    return rim_box, mask
+    return mask
 
 def create_box_mask(contour, image_shape):
+    """
+    Creates a mask with a box contour of the given contour.
+    
+        Parameters:
+            contour:        Contour as base for the mask
+            image_shape:    Shape of the box to be created
+        Return:
+            mask:           Created mask of box contour
+    """
     mask = np.ones(image_shape, np.uint8)
     box = create_box_contour(contour)
     cv.drawContours(mask, [box], 0, 255, -1)
     return mask
 
 def create_box_contour(contour):
+    """
+    Creates a box contour on basis of the given contour.
+    
+        Parameters:
+            contour:    Basis for the box contour to be created
+        Return:
+            box:        Box contour
+    """
     rect = cv.minAreaRect(contour)
     box = cv.boxPoints(rect)
     box = np.int0(box)
     return box
 
 def get_box_info(box_cnt):
+    """
+    Returns a number of informations of the given box contour.
+
+    The mainline of the box contour refers to the longer one of the edges starting from the first point of box_cnt.
+    The first point of a box contour is always the one with the highest row value, therefore the one closest to the bottom of the screen if displayed.
+    The following points of a box contour are then clockwise arranged.
+    So the mainline goes either from 0 to 1 or 0 to 3.
+    For more information on this function please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann"
+    
+        Parameters:
+            box_cnt:            Box contour
+        Return:
+            main_length:        Length of the given box / Lenght of the mainline
+            secondary_length:   Width of the given box
+            angle:              Angle of the mainline of the box
+            mainline_endpoint:  Endpoint of the mainline of the box. Either 1 or 3
+    """
     l03 = np.sqrt(np.square(box_cnt[3][0] - box_cnt[0][0]) + np.square(box_cnt[3][1] - box_cnt[0][1]))
     l01 = np.sqrt(np.square(box_cnt[1][0] - box_cnt[0][0]) + np.square(box_cnt[1][1] - box_cnt[0][1]))
     ankathete = float(box_cnt[3][1] - box_cnt[0][1])
@@ -81,7 +121,24 @@ def get_box_info(box_cnt):
         mainline_endpoint = 1
     return main_length, secondary_length, angle, mainline_endpoint
 
-def find_match(img, comparator, maxL=1280.0, minL=0.0):
+def find_match(img, comparator, maxL=1280.0, minL=0.0, verbose=False):
+    """
+    Extracts all contours from the given image, finds the best matching one to the comparator and returns it in form of different datatypes.
+
+    img and comparator must have the same resolution.
+    
+        Parameters:
+            img:            Image on which the designated contour shall be found
+            comparator:     Mask which resembles the box contour to be found
+            maxL:           Maximal mainlength of the box contour to be found
+            minL:           Minimal mainlength of the box contour to be found
+            verbose:        Flag to print messages for debugging
+        Return:
+            True/False:     Whether a match was found or not
+            best_contour:   Box contour of the best match; None if no match was found
+            best_mask:      Mask of the box contour of the best match; None if no match was found
+            show_img:       Grayscale input image with found best matching box contour drawn on it in green; None if no match was found
+    """
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(img, 10, 100)
@@ -100,51 +157,54 @@ def find_match(img, comparator, maxL=1280.0, minL=0.0):
             best_match = match
             best_mask = deepcopy(work_mask)
             best_contour = create_box_contour(c)
-        if verbose and img.shape[0] == 200:
-            cv.destroyAllWindows()
-            show_img = deepcopy(img)
-            show_img = cv.cvtColor(show_img, cv.COLOR_GRAY2BGR)
-            cv.drawContours(show_img, [best_contour], 0, (0,255,0), 1)
-            """ cv.imshow("{}".format(match), show_img)
-            if cv.waitKey(0) == 119:
-                cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/small_staple.jpg", best_mask)    """             
-            plot.subplot(311), plot.imshow(comparator, cmap = "gray"), plot.title("comparator"), plot.xticks([]), plot.yticks([])
-            plot.subplot(312), plot.imshow(work_mask, cmap = "gray"), plot.title("found mask"), plot.xticks([]), plot.yticks([])
-            plot.subplot(313), plot.imshow(show_img), plot.title("found contour: {}".format(match)), plot.xticks([]), plot.yticks([])
-            plot.show()
     if verbose:
         print("deviation for best match at: {}%\nnumber of best matches: {}".format(float(best_match)*100, i))
     if not best_contour is None:
         show_img = cv.cvtColor(deepcopy(img), cv.COLOR_GRAY2BGR)
         cv.drawContours(show_img, [best_contour], 0, (0,255,0), 1)
-        if verbose:
-            plot.subplot(111), plot.imshow(show_img), plot.title("found contour: {}".format(match)), plot.xticks([]), plot.yticks([])
-            plot.show()
         return True, best_contour, best_mask, show_img
     else:
         return False, None, None, None
 
 def sortkey_first(x):
+    """
+    Sortkey for find_matches. Sorts the list in accordance to the first element.
+    """
     return x[0]
 
-def find_matches(img, comparator, maxL=1280.0, minL=0.0):
+def find_matches(img, comparator, maxL=1280.0, minL=0.0, deviation_thresh=0.15, verbose=False):
+    """
+    Extracts all contours from the given image and returns all found matches with a deviation lower than 15% as a sorted list.
+
+    img and comparator must have the same resolution.
+    
+        Parameters:
+            img:                Image on which the designated contour shall be found
+            comparator:         Mask which resembles the box contour to be found
+            maxL:               Maximal mainlength of the box contour to be found; Default: 1280.0
+            minL:               Minimal mainlength of the box contour to be found; Default: 0.0
+            deviation_thresh:   Maximal deviation of found contour to comparator; Default: 0.15 -> 15%
+            verbose:            Flag to print messages for debugging
+        Return:
+            True/False:         Whether one or more matches were found or not
+            best_matches:       List of all found matches, sorted by deviation in ascending order; Empty if no matches were found
+    """
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(img, 10, 100)
     contours = cv.findContours(edges.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[1]
-    match_thresh = 0.15
     best_matches = list()
     for c in contours:
         work_mask = create_box_mask(c, img.shape)
         match = cv.matchShapes(comparator, work_mask, 1, 0.0)
         arcL = cv.arcLength(create_box_contour(c), True)
-        if arcL < maxL and arcL > minL and match < match_thresh:
+        if arcL < maxL and arcL > minL and match < deviation_thresh:
             if verbose:
                 print(arcL)
             best_matches.append([match,create_box_contour(c), deepcopy(work_mask)])
     best_matches.sort(key=sortkey_first)
     if len(best_matches) > 0:
-        print("max deviation for matches at: {}%\n\n".format(match_thresh*100))
+        print("max deviation for matches at: {}%\n\n".format(deviation_thresh*100))
         print("number of matches: {}".format(len(best_matches)))
         print("deviation for best match at {}%".format(best_matches[0][0]))
         return True, best_matches
@@ -152,6 +212,28 @@ def find_matches(img, comparator, maxL=1280.0, minL=0.0):
         return False, best_matches
 
 def detect_staple(img):
+    """
+    Function to detect staples in a given image.
+
+    The given image must have a resolution of 640x400 or 320x200.
+    This functions uses different approaches and return parameters for the different image resolutions. 
+    So please choose the right resolution for the effect you want to accomplish.
+
+    640x400 -> The Method searches for all contours on the image that resemble that of a staple from afar. It returns a sorted list of all found contours with a deviation of maximum 15%
+    320x200 -> The Method searches for the contour that resembles that of a staple from near with the least deviation.
+    
+        Parameters:
+            img:                Image on which the designated contour shall be found
+        Return:
+            640x400:
+                success:        True if at least one match was found, else False
+                found_matches:  List of all found matches, sorted by deviation in ascending order; None if no matches were found
+                None:           Only for compatibility with the return parameters for 320x200 images
+            320x200:
+                success:        True if a match was found, else False
+                found_contour:  Box contour of the found match
+                cnt_img:        Given image with the found contour drawn on it
+    """
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     if img.shape[0] == 400:
@@ -161,8 +243,8 @@ def detect_staple(img):
         success, found_matches = find_matches(img, cmp_mask, maxL=maxL, minL=minL)
         if not success:
             print("cannot find any staple")
-            return False, img, None
-        return success, found_matches
+            return success, None, None
+        return success, found_matches, None
     elif img.shape[0] == 200:
         cmp_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/staple1.jpg", 0)
         maxL = 120.0
@@ -171,19 +253,31 @@ def detect_staple(img):
         success, found_contour, best_mask, cnt_img = find_match(img, cmp_mask, maxL=maxL, minL=minL)
         if not success:
             print("cannot find any staple")
-            return False, img, None
+            return success, img, None
         return success, found_contour, cnt_img
     else:
         print("given image has wrong resolution. Please provide a picture with following format: 640x400")
-        return False, img, None
+        return success, img, None
 
 
 def detect_paper(img):
+    """
+    Function to detect a document on an appropriate workplate and apply a mask on it, so that only the clear rim of the document remains.
+
+    For this to function a specially arranged workspace is needed. Please provide such as described in "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann".
+    
+        Parameters:
+            img:        Image on which the designated contour shall be found. Must be of resolution 640x400
+        Return:
+            success:    True if a document was found, else False
+            only_rim:   Given image masked, so that only the clear rim remains; img if no document was found
+            paper_cnt:  Box contour of the found document; None if no document was found
+    """
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     if img.shape[0] != 400:
         print("given image has wrong resolution. Please provide a picture with following format: 640x400")
-        return False, img
+        return False, img, None
     #get background mask
     workplate_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/background.jpg", 0)
     workplate_mask = cv.resize(workplate_mask, img.shape[1::-1])
@@ -204,45 +298,53 @@ def detect_paper(img):
     #create ROI as mask and apply to image
     rim_mask = create_rim(paper_cnt, paper_mask, (20.0, 25.0))[1]
     only_rim = cv.bitwise_and(img, rim_mask)
-    if verbose:
-        plot.subplot(411), plot.imshow(img, cmap = "gray"), plot.title("image"), plot.xticks([]), plot.yticks([])
-        plot.subplot(412), plot.imshow(minus_background, cmap = "gray"), plot.title("subtracted background"), plot.xticks([]), plot.yticks([])
-        plot.subplot(413), plot.imshow(minus_workplate, cmap = "gray"), plot.title("subtracted workplate"), plot.xticks([]), plot.yticks([])
-        plot.subplot(414), plot.imshow(only_rim, cmap = "gray"), plot.title("only paper rim"), plot.xticks([]), plot.yticks([])
-        plot.show()
     return True, only_rim, paper_cnt
 
 def mask_window(img, gripper_action_point):
+    """
+    Masks the given image, so that only a field around the given action point remains visible.
+    
+        Parameters:
+            img:                    Image to be masked
+            gripper_action_point:   Action point of the used end effector
+        Return:
+            masked_img:             Given image with applied mask
+    """
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     mask = np.zeros(img.shape, np.uint8)
     field = 60
     cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]-10), 255, -1)
-    img = cv.bitwise_and(img, mask)
-    if verbose:
-        plot.subplot(211), plot.imshow(mask, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
-        plot.subplot(212), plot.imshow(img, cmap="gray"), plot.title("x"), plot.xticks([]), plot.yticks([])
-        plot.show()
-    return img
+    masked_img = cv.bitwise_and(img, mask)
+    return masked_img
 
 def distance_to_point(point, gripper_action_point, arm_z):
+    """
+    Calculates the distance between the action point and a given point in meter and split into x and y.
+
+    For more information on the used formula please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann".
+    
+        Parameters:
+            img:                    Image to be masked
+            gripper_action_point:   Action point of the used end effector
+            arm_z:                  Current z value of the used end effector
+        Return:
+            distance:               Calculated distance in format: (x, y)
+    """
     factor = -9530.9 * arm_z + 1949.7
     distance_x = (point[0] - gripper_action_point[0]) / factor
     distance_y = (-(point[1] - gripper_action_point[1]) / factor) - 0.004
     return (distance_x, distance_y)
 
 def draw_cnt_on_img(cnt, img):
+    """
+    Draws a given contour on a given image.
+    
+        Parameters:
+            cnt:    Contour to be drawn  
+            img:    Image to be drawn on
+        Return:
+            Image:  Given image with contour drawn on it
+    """
     if len(img.shape) == 2:
         img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
     return cv.drawContours(img, [cnt], 0, (0,0,255), 1)
-
-
-def main():
-    img = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/paper640_0.jpg", 0)
-    success, only_rim = detect_paper(img)
-    if not success:
-        return False
-    detect_staple(only_rim)
-
-
-if __name__ == "__main__":
-    main()

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+#------------------------------------------
+#Wird nicht mit abgegeben
+
 import rospy
 
 import cv2

@@ -13,7 +13,18 @@ from copy import deepcopy
 
 
 class Cam(object):
-    def __init__(self, limb, verbose, arm_z=5.0, windowed=False):
+    """
+    Class to control one hand camera of Baxter
+    """
+    def __init__(self, limb, verbose, arm_z=5.0):
+        """
+        Constructor for the Cam class.
+
+            Parameters:
+                limb:       The limb of Baxter whichs camera shall be managed; Options: 'left', 'right'
+                verbose:    True -> print verbose information; False -> dont print verbose information; Default: False
+                arm_z:      z value of the cameras arm in meter (needed for action point prediction); Default: 5.0
+        """
         sub_cam = "/cameras/{}_hand_camera/image".format(limb)
         self._limb = limb
         self.controller = baxter_interface.CameraController("{}_hand_camera".format(limb))
@@ -24,12 +35,20 @@ class Cam(object):
         self._init = True
         self.sub = rospy.Subscriber(sub_cam, Image, self.show_callback)
         self.arm_z = arm_z
-        self.windowed = windowed
+        self.windowed = False
         self._img = None
         self.ix = 0
 
 
     def show_callback(self, msg):
+        """
+        Callback method for the image stream of the hand camera.
+
+        Displays the live image stream of the cam, the current snapshot and the current highlight.
+
+            Parameters:
+                msg:    The image message to be displayed
+        """
         try:
             img = self.bridge.imgmsg_to_cv2(msg)
             if self.update_snapshot:
@@ -51,31 +70,59 @@ class Cam(object):
             print("Bridge-Error: {}".format(e))
 
     def onMouse(self, event, x, y, flags, param):
+        """
+        Eventhandler for clicking on the 'Snapshot' image.
+
+        Prints the pixel coordinates of the point on which the mouse clicked on the 'Snapshot' display.
+
+            Parameters:
+                event:  The triggering event type
+                x:      The x coordinate at which the event got triggered
+                y:      The y coordinate at which the event got triggered
+                flags:  Flags that come with the event
+                param:  Optional parameters that belong to the triggering event
+        """
         if event == cv.EVENT_LBUTTONDOWN:
             print("{},{}".format(x,y))
 
     def get_action_point(self):
-        display_y = 2748.1*np.float_power(self.arm_z, 3)-789.76*np.square(self.arm_z)+144.88*self.arm_z+166.8 #<- polynomiale Trendlinie 3. Ordnung; lineare Trendlinie: (362.83*self.arm_z)+177.55
-        display_x = -1719*np.float_power(self.arm_z, 3)+200.79*np.square(self.arm_z)-8.1584*self.arm_z+374.83 #<- polynomiale Trendlinie 3. Ordnung; lineare Trendlinie:(-102.02*self.arm_z)+374.46
-        if self.windowed:
-            display_x -= 280
-        return (int(display_x),int(display_y))
+        """
+        Calculates the action point depending on the current z value of the arm.
 
-    def action_point(self, z):
-        display_y = (362.83*z)+177.55       #Errechnet durch Mittelwert bei 3 Messdurchläufen und Trendlinie über diese (siehe Greiferhöhe zu Aktionspunkt.xlsx). Trifft nur auf Stifthalterung_MKII zu
-        display_x = (-102.02*z)+374.46
+        For further information on the used calculations please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann".
+        """
+        display_y = 2748.1*np.float_power(self.arm_z, 3)-789.76*np.square(self.arm_z)+144.88*self.arm_z+166.8  #third order polynomial trend line 
+        display_x = -1719*np.float_power(self.arm_z, 3)+200.79*np.square(self.arm_z)-8.1584*self.arm_z+374.83  #third order polynomial trend line 
         if self.windowed:
             display_x -= 280
         return (int(display_x),int(display_y))
 
     def update_z(self, z):
+        """
+        Saves the given z value for the calculation of the action point.
+
+            Parameters:
+                z:  Current z value of the gripper
+        """
         self.arm_z = z
 
-    def set_img(self, img):
+    def set_highlight(self, img):
+        """
+        Saves the given image as the new highlight to be displayed.
+
+            Parameters:
+                img:    Image to be displayed as highlight
+        """
         self._img = img
-        self.write_img(img)
 
     def write_img(self, img):
+        """
+        Saves the given image to a folder.
+        Each method call will increase the index to be used in the naming of the file
+
+            Parameters:
+                img:    Image to be saved as file
+        """
         cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/bilder/08/pic_{}.jpg".format(self.ix), img)
         self.ix+=1
  

@@ -5,7 +5,17 @@ import sys
 import numpy as np
 from matplotlib import pyplot as plot
 
+
+#-------------------------------------------------------
+#Wird nicht verwendet und nicht zur Arbeit hinzugefügt
+
 def plot_it(masks):
+    """
+    Displays the given masks in a neat way
+
+        Parameter:
+            masks: List of binary masks to be displayed
+    """
     i = 0
     while i in range(len(masks)):
         fig, ax = plot.subplots(5, 2, sharex='none', sharey='none')
@@ -18,6 +28,13 @@ def plot_it(masks):
         plot.show()
 
 def contour_on_paper(img, contour):
+    """
+    Draws a given contour on a given image and displays it
+
+        Parameters:
+                img: Image to draw on
+                contour: Contour to be drawn
+    """
     rect = cv.minAreaRect(contour)
     box = cv.boxPoints(rect)
     box = np.int0(box)
