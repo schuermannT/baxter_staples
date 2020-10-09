@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+
+"""
+A simple script to measure the accuracy of the robots arm movements depending on different increments and speed configurations.
+
+The chosen arm approaches a hardcoded pose multiple times with different configurations and prints the outcome in a neat way to import it in a spreadsheet program as Microsoft Excel to analyze.
+"""
+
 import argparse
 import struct
 import sys
@@ -18,7 +25,7 @@ from geometry_msgs.msg import (
     Quaternion
 )
 
-#Startpose -> Alle weiteren Messposen werden in Abhängigkeit von dieser berechnet
+
 start_pose = {
                 'left': PoseStamped(
                     pose=Pose(
@@ -53,32 +60,38 @@ start_pose = {
             }
 
 
-def positive_x(arm, step_width = 0.01, speed = 0.3):
+def measure_positive_x(arm, step_width = 0.01, speed = 0.3):
+    """
+    Approaches one point 20 times and measures the difference between given pose and reached pose.
+    
+    The approaches contain two movements. The first is to minimize joint play, whereas the second is to reach the measurement pose.
+
+        Parameter:
+            arm:        The robots limb to perform the motion
+            step_width: Width of the steps to be made in meter; Default: 0.01
+            speed:      Speed at which the arm shall move; Default: 0.3; Range: 0.0-1.0
+        Return:
+            diff_dict:  Dictionary containing the measured data. Structure: diff_dict['x' : list(), 'y' : list()]
+    """
     print("--- {} arm: positive x").format(arm._limb_name)    
     arm._limb.set_joint_position_speed(speed)
-    #raw_input("Press Enter to start...")
     diff_dict = dict()
     diff_dict['x'] = list()
     diff_dict['y'] = list()
     for round_counter in range(20):
-        #Initial Pose
-        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(start_pose[arm._limb_name].pose), arm._verbose, posx=(step_width * -2))): #approach starting point with minimal joint play
-            arm.move_to_solution()
-        else:
+        #Minimize joint play
+        if not arm.move_to_pose(arm_class.alter_pose_inc(start_pose[arm._limb_name].pose, arm._verbose, posx=(step_width * -2))):
             arm.simple_failsafe()
             return False
+        #Initial pose
         initial_pose = deepcopy(start_pose[arm._limb_name].pose)
-        if arm.get_solution(arm_class.alter_pose_inc(initial_pose, verbose=arm._verbose, posx=-(step_width))):
-            arm.move_to_solution()
-        else:
+        if not arm.move_to_pose(arm_class.alter_pose_inc(initial_pose, verbose=arm._verbose, posx=-(step_width))):
             arm.simple_failsafe()
             return False
         print("--->Reached: initial pose\nStarting Measurements...")
         #Measuring
-        next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(deepcopy(initial_pose), arm._verbose, posx=step_width))
-        if arm.get_solution(next_pose):
-            arm.move_to_solution()
-        else:
+        next_pose = arm_class.alter_pose_inc(arm_class.alter_pose_inc(initial_pose, arm._verbose, posx=step_width))
+        if not arm.move_to_pose(next_pose):
             arm.simple_failsafe()
             return False
         diff_dict['x'].append(arm._current_pose.position.x - next_pose.position.x)
@@ -102,7 +115,6 @@ def main():
             '-l', '--limb',
             choices=['left', 'right'],
             required=True,
-            #default='right',
             help='the limb to run the measurements on'
         )
         args = parser.parse_args(rospy.myargv()[1:])
@@ -110,25 +122,24 @@ def main():
         #Init
         rospy.init_node("measure_precision", anonymous = True)
         time.sleep(0.5)
-        print("--- Ctrl-D stops the program ---")
         print("Init started...")
         arm = arm_class.Arm(args.limb, args.verbose)
         print("Init finished...")
-
-        #print(arm_class.convert_to_pose(arm._limb.endpoint_pose()))
 
         #Move to neutral Pose
         arm.set_neutral()
 
         #Measurements
         print("Starting measurements...")
-        slow_short = positive_x(arm, step_width=0.01, speed=0.1)
-        slow_medium = positive_x(arm, step_width=0.02, speed=0.1)
-        slow_far = positive_x(arm, step_width=0.03, speed=0.1)
-        fast_short = positive_x(arm, step_width=0.01, speed=0.3)
-        fast_medium = positive_x(arm, step_width=0.02, speed=0.3)
-        fast_far = positive_x(arm, step_width=0.03, speed=0.3)
+        slow_short = measure_positive_x(arm, step_width=0.01, speed=0.1)
+        slow_medium = measure_positive_x(arm, step_width=0.02, speed=0.1)
+        slow_far = measure_positive_x(arm, step_width=0.03, speed=0.1)
+        fast_short = measure_positive_x(arm, step_width=0.01, speed=0.3)
+        fast_medium = measure_positive_x(arm, step_width=0.02, speed=0.3)
+        fast_far = measure_positive_x(arm, step_width=0.03, speed=0.3)
 
+        #Print data
+        print("slow_short,slow_medium,slow_far,fast_short,fast_medium,fast_far")
         print("x")
         for k in range(len(slow_short['x'])):
             print("{},{},{},{},{},{}").format(slow_short['x'][k], slow_medium['x'][k], slow_far['x'][k], fast_short['x'][k], fast_medium['x'][k], fast_far['x'][k])

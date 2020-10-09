@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+
 import argparse
 import struct
 import sys
@@ -54,6 +55,14 @@ start_pose = {
             }
 
 def save_data(arm, pose, filename):
+    """
+    Adds the distance between the given pose and the current pose of the given arm to the given file.
+
+        Parameter:
+               arm:         Robots limb to get current pose from
+               pose:        Pose to compare to current pose
+               filename:    Absolute path to the file to be modified
+    """
     writefile = open(filename, 'a')
     x_diff = (arm._current_pose.position.x - pose.position.x)*1000
     y_diff = (arm._current_pose.position.y - pose.position.y)*1000
@@ -61,8 +70,6 @@ def save_data(arm, pose, filename):
     writefile.write("{},{},{}\n".format(x_diff, y_diff, z_diff))
     writefile.close()
     print("saved data to {}".format(filename))
-
-
 
 def main():
     try:

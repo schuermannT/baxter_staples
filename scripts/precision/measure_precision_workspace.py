@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+
+"""
+Script to measure the robots accuracy in a specified workspace with rectangular shape.
+The default size of this workspace equals that of a DIN A4 document. 
+For this the robot approaches a number of points arranged in a matrix and prints the measured data in a neat way to be importet into a spreadsheet program.
+"""
+
 import argparse
 import struct
 import sys
@@ -19,41 +26,53 @@ from geometry_msgs.msg import (
     Quaternion
 )
 
-#Startpose -> Alle weiteren Messposen werden in Abhängigkeit von dieser berechnet
+
 start_pose = {
-                'left': PoseStamped(
-                    pose=Pose(
-                        position=Point(
-                            x=0.380,
-                            y=0.100,
-                            z=-0.150,
-                        ),
-                        orientation=Quaternion(
-                            x=-0.000,
-                            y=0.999,
-                            z=0.000,
-                            w=0.000,
-                        ),
-                    ),
-                ),
-                'right': PoseStamped(
-                    pose=Pose(
-                        position=Point(
-                            x=0.660,
-                            y=-0.300,
-                            z=0.000,
-                        ),
-                        orientation=Quaternion(
-                            x=0.000,
-                            y=0.999,
-                            z=0.000,
-                            w=0.000,
-                        ),
-                    ),
-                )
-            }
+    'left': PoseStamped(
+        pose=Pose(
+            position=Point(
+                x=0.380,
+                y=0.100,
+                z=-0.150,
+            ),
+            orientation=Quaternion(
+                x=-0.000,
+                y=0.999,
+                z=0.000,
+                w=0.000,
+            ),
+        ),
+    ),
+    'right': PoseStamped(
+        pose=Pose(
+            position=Point(
+                x=0.660,
+                y=-0.300,
+                z=0.000,
+            ),
+            orientation=Quaternion(
+                x=0.000,
+                y=0.999,
+                z=0.000,
+                w=0.000,
+            ),
+        ),
+    )
+}
 
 def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
+    """
+    Measure the accuracy of the given robots limb in a workspace of given size.
+    The number of measurement points depends on the relationship between workspace size and step width.
+
+        Parameter:
+            arm:            The robots limb to be measured on
+            step_width:     Distance between the measurement points
+            workspace_x:    Size of the workspace along the x axis
+            workspace_y:    Size of the workspace along the y axis
+        Return:
+            out_dict:       Dictionary that contains the measured data; Structure: outdict['x{}y{}' = Point]
+    """
     print("--- {} arm: positive x").format(arm._limb_name)    
     #raw_input("Press Enter to start...")
     out_dict = dict()
@@ -104,13 +123,11 @@ def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
                 )
                 out_dict['y{}x{}'.format(((int)(next_pose.position.y*100)), ((int)(next_pose.position.x*100)))] = diff
             print("row {} finished".format(y_step))
-    print_data_as_csv(out_dict)
-    return out_dict
-
-def print_data_as_csv(data_dict):
+    #Print data
     print("Pose,x_diff[mm],y_diff[mm],z_diff[mm],,")
     for k in data_dict.keys():
         print("{},{},{},{},,").format(k, data_dict[k].x*1000, data_dict[k].y*1000, data_dict[k].z*1000)
+    return out_dict    
 
 def main():
     try:
@@ -146,11 +163,6 @@ def main():
 
         #Move to neutral Pose
         arm.set_neutral()
-
-        """ #Grab Pen
-        raw_input("Press Enter to close gripper")
-        time.sleep(5)
-        arm._gripper.close() """
 
         #Measurements
         print("Starting measurements...")

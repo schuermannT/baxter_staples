@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+
+"""
+Script to measure the accuracy of a robots limb for the different possible directions.
+"""
+
 import argparse
 import struct
 import sys
@@ -7,7 +12,6 @@ import time
 
 import rospy
 
-import measure_precision_lib
 import arm_class
 
 from copy import deepcopy
@@ -20,17 +24,62 @@ from geometry_msgs.msg import (
 )
 
 
+middle_pose = {
+                'left': PoseStamped(
+                    pose=Pose(
+                        position=Point(
+                            x=0.660,
+                            y=0.300,
+                            z=0.000,
+                        ),
+                        orientation=Quaternion(
+                            x=-0.000,
+                            y=0.999,
+                            z=0.000,
+                            w=0.000,
+                        ),
+                    ),
+                ),
+                'right': PoseStamped(
+                    pose=Pose(
+                        position=Point(
+                            x=0.660,
+                            y=-0.300,
+                            z=0.000,
+                        ),
+                        orientation=Quaternion(
+                            x=0.000,
+                            y=0.999,
+                            z=0.000,
+                            w=0.000,
+                        ),
+                    ),
+                )
+            }
+
+
 def positive_x(arm, rounds):
+    """
+    Executes ten movements with a positive increment of 2cm along the x axis and measures the difference between expected pose and reached pose.
+    This motion gets repeated for a number of given rounds.
+
+        Parameter:
+            arm:        The robots limb to be measured on
+            rounds:     Number of rounds to be executed
+        Return:
+            True/False: False if any movement is not executable, else True
+    """
     print("--- {} arm: positive x").format(arm._limb_name)    
     raw_input("Press Enter to start...")
     for round_counter in range(rounds):
-        #Initial Pose
-        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(measure_precision_lib.middle_pose[arm._limb_name].pose), arm._verbose, posx=-0.12)): #approach starting point with minimal joint play
+        #Minimize joint play
+        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(middle_pose[arm._limb_name].pose), arm._verbose, posx=-0.12)):
             arm.move_to_solution()
         else:
             arm.simple_failsafe()
             return False
-        initial_pose = deepcopy(measure_precision_lib.middle_pose[arm._limb_name].pose)
+        #Initial Pose
+        initial_pose = deepcopy(middle_pose[arm._limb_name].pose)
         if arm.get_solution(arm_class.alter_pose_inc(initial_pose, verbose=arm._verbose, posx=-0.1)):
             arm.move_to_solution()
         else:
@@ -63,16 +112,27 @@ def positive_x(arm, rounds):
     return True
 
 def negative_x(arm, rounds):
+    """
+    Executes ten movements with a negative increment of 2cm along the x axis and measures the difference between expected pose and reached pose.
+    This motion gets repeated for a number of given rounds.
+
+        Parameter:
+            arm:        The robots limb to be measured on
+            rounds:     Number of rounds to be executed
+        Return:
+            True/False: False if any movement is not executable, else True
+    """
     print("--- {} arm: negative x").format(arm._limb_name)    
     raw_input("Press Enter to start...")
     for round_counter in range(rounds):
-        #Initial Pose
-        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(measure_precision_lib.middle_pose[arm._limb_name].pose), arm._verbose, posx=0.12)): #approach starting point with minimal joint play
+        #Minimize joint play
+        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(middle_pose[arm._limb_name].pose), arm._verbose, posx=0.12)):
             arm.move_to_solution()
         else:
             arm.simple_failsafe()
             return False
-        initial_pose = deepcopy(measure_precision_lib.middle_pose[arm._limb_name].pose)
+        #Initial Pose
+        initial_pose = deepcopy(middle_pose[arm._limb_name].pose)
         if arm.get_solution(arm_class.alter_pose_inc(initial_pose, verbose=arm._verbose, posx=0.1)):
             arm.move_to_solution()
         else:
@@ -105,16 +165,27 @@ def negative_x(arm, rounds):
     return True
 
 def positive_y(arm, rounds):
+    """
+    Executes ten movements with a positive increment of 2cm along the y axis and measures the difference between expected pose and reached pose.
+    This motion gets repeated for a number of given rounds.
+
+        Parameter:
+            arm:        The robots limb to be measured on
+            rounds:     Number of rounds to be executed
+        Return:
+            True/False: False if any movement is not executable, else True
+    """
     print("--- {} arm: positive y").format(arm._limb_name)    
     raw_input("Press Enter to start...")
     for round_counter in range(rounds):
-        #Initial Pose
-        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(measure_precision_lib.middle_pose[arm._limb_name].pose), arm._verbose, posy=-0.12)): #approach starting point with minimal joint play
+        #Minimize joint play
+        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(middle_pose[arm._limb_name].pose), arm._verbose, posy=-0.12)): #approach starting point with minimal joint play
             arm.move_to_solution()
         else:
             arm.simple_failsafe()
             return False
-        initial_pose = deepcopy(measure_precision_lib.middle_pose[arm._limb_name].pose)
+        #Initial Pose
+        initial_pose = deepcopy(middle_pose[arm._limb_name].pose)
         if arm.get_solution(arm_class.alter_pose_inc(initial_pose, verbose=arm._verbose, posy=-0.1)):
             arm.move_to_solution()
         else:
@@ -147,16 +218,27 @@ def positive_y(arm, rounds):
     return True
 
 def negative_y(arm, rounds):
+    """
+    Executes ten movements with a negative increment of 2cm along the y axis and measures the difference between expected pose and reached pose.
+    This motion gets repeated for a number of given rounds.
+
+        Parameter:
+            arm:        The robots limb to be measured on
+            rounds:     Number of rounds to be executed
+        Return:
+            True/False: False if any movement is not executable, else True
+    """
     print("--- {} arm: negative y").format(arm._limb_name)    
     raw_input("Press Enter to start...")
     for round_counter in range(rounds):
-        #Initial Pose
-        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(measure_precision_lib.middle_pose[arm._limb_name].pose), arm._verbose, posy=0.12)): #approach starting point with minimal joint play
+        #Minimize joint play
+        if arm.get_solution(arm_class.alter_pose_inc(deepcopy(middle_pose[arm._limb_name].pose), arm._verbose, posy=0.12)): #approach starting point with minimal joint play
             arm.move_to_solution()
         else:
             arm.simple_failsafe()
             return False
-        initial_pose = deepcopy(measure_precision_lib.middle_pose[arm._limb_name].pose)
+        #Initial Pose
+        initial_pose = deepcopy(middle_pose[arm._limb_name].pose)
         if arm.get_solution(arm_class.alter_pose_inc(initial_pose, verbose=arm._verbose, posy=0.1)):
             arm.move_to_solution()
         else:
