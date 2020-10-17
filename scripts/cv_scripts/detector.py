@@ -237,7 +237,7 @@ def detect_staple(img):
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     if img.shape[0] == 400:
-        cmp_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/small_staple.jpg", 0)
+        cmp_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_images/masks/small_staple.jpg", 0)
         maxL = 50.0
         minL = 20.0
         success, found_matches = find_matches(img, cmp_mask, maxL=maxL, minL=minL)
@@ -246,7 +246,7 @@ def detect_staple(img):
             return success, None, None
         return success, found_matches, None
     elif img.shape[0] == 200:
-        cmp_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/staple1.jpg", 0)
+        cmp_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_images/masks/staple1.jpg", 0)
         maxL = 120.0
         minL = 60.0
         img = cv.GaussianBlur(img, (5,5), 0)
@@ -279,10 +279,10 @@ def detect_paper(img):
         print("given image has wrong resolution. Please provide a picture with following format: 640x400")
         return False, img, None
     #get background mask
-    workplate_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/background.jpg", 0)
+    workplate_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_images/masks/background.jpg", 0)
     workplate_mask = cv.resize(workplate_mask, img.shape[1::-1])
     #get workplate mask
-    paper_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/masks/document.jpg", 0)
+    paper_mask = cv.imread("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_images/masks/document.jpg", 0)
     paper_mask = cv.resize(paper_mask, img.shape[1::-1])
     #subtract background
     erode_kernel = np.ones((11,13), np.uint8)

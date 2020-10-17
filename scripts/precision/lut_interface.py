@@ -11,7 +11,7 @@ This interface is capable of following actions:
 - Writing a LUT as a .csv-file
 - Apply LUT to a given pose
 
-A LUT is a complex dictionary object representing a matrix of measure points across a rectangular workspace.
+A LUT is a multilayered dictionary object representing a matrix of measure points across a rectangular workspace.
 Each value of the matrix holds the average deviation for this pose of one of the robots limbs.
 For further information please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann".
 """
@@ -293,7 +293,7 @@ def improve_pose(pose, lut, limb_name = 'left'):
         else:
             print("improve_pose: given pose not in improvable workspace")
             return pose
-    #Given poses y is slightly bigger than a point in the LUT
+    #Given poses y is slightly bigger than point in the LUT
     elif y_name_minus in lut[limb_name]['x_pos'].keys():
         #poses x resembles point in LUT
         if x_name in lut[limb_name]['x_pos'][y_name_minus].keys():
@@ -318,7 +318,7 @@ def improve_pose(pose, lut, limb_name = 'left'):
     else:
         print("improve_pose: given pose not in improvable workspace")
         return pose
-    return arm_class.alter_pose_inc(pose, posx=x_diff, posy=y_diff, posz=z_diff) 
+    return arm_class.alter_pose_inc(pose, posx=-x_diff, posy=-y_diff, posz=-z_diff) 
 
 def main():
     try:

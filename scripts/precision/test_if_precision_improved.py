@@ -99,9 +99,9 @@ def main():
         print("--- Ctrl-D stops the program ---")
         print("Init started...")
         arm = arm_class.Arm('left', verbose=args.verbose)
-        lut = lut_interface.restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/my_first_lut/lut.csv")['lut']
-        number_of_rounds = 30
-        filelocation = "/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/improvement_tests/1/"
+        lut = lut_interface.restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/lut.csv")['lut']
+        number_of_rounds = 20
+        filelocation = "/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/"
         test_poses = [
             arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.06, posy=0.06),
             arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.06, posy=0.15),

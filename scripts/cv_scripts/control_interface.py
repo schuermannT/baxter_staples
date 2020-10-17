@@ -240,7 +240,7 @@ def main():
             if cmd_param == 'update':
                 arm.cam.update_snapshot = True
             elif cmd_param == "write":
-                cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_test_images/rename_me.jpg", arm.cam._img)
+                cv.imwrite("/home/user/schuermann_BA/ros_ws/src/baxter_staples/cv_images/rename_me.jpg", arm.cam._img)
             elif cmd_param == "window":
                 window(arm)
             elif cmd_param == "exposure":
