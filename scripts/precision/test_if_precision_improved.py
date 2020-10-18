@@ -9,6 +9,7 @@ import time
 import rospy
 from numpy import arange
 
+sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
 import arm_class
 import lut_interface
 
@@ -100,7 +101,7 @@ def main():
         print("Init started...")
         arm = arm_class.Arm('left', verbose=args.verbose)
         lut = lut_interface.restore_lut_from_file("/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/lut.csv")['lut']
-        number_of_rounds = 20
+        number_of_rounds = 10
         filelocation = "/home/user/schuermann_BA/ros_ws/src/baxter_staples/precision/"
         test_poses = [
             arm_class.alter_pose_inc(deepcopy(start_pose['left'].pose), verbose=args.verbose, posx=0.06, posy=0.06),
@@ -113,6 +114,7 @@ def main():
 
         #Measurements
         for n in range(number_of_rounds):
+            print(n)
             for p in range(len(test_poses)):
                 #not improved measurements
                 if arm.get_solution(test_poses[p]):

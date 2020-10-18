@@ -15,6 +15,7 @@ import time
 import rospy
 from numpy import arange
 
+sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
 import arm_class
 
 from copy import deepcopy
@@ -125,8 +126,8 @@ def positive_x(arm, step_width, workspace_x=0.297, workspace_y=0.210):
             print("row {} finished".format(y_step))
     #Print data
     print("Pose,x_diff[mm],y_diff[mm],z_diff[mm],,")
-    for k in data_dict.keys():
-        print("{},{},{},{},,").format(k, data_dict[k].x*1000, data_dict[k].y*1000, data_dict[k].z*1000)
+    for k in out_dict.keys():
+        print("{},{},{},{},,").format(k, out_dict[k].x*1000, out_dict[k].y*1000, out_dict[k].z*1000)
     return out_dict    
 
 def main():

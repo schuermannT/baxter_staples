@@ -24,6 +24,7 @@ import time
 import rospy
 from numpy import arange
 
+sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
 import arm_class
 
 from copy import deepcopy
@@ -318,7 +319,7 @@ def improve_pose(pose, lut, limb_name = 'left'):
     else:
         print("improve_pose: given pose not in improvable workspace")
         return pose
-    return arm_class.alter_pose_inc(pose, posx=-x_diff, posy=-y_diff, posz=-z_diff) 
+    return arm_class.alter_pose_inc(pose, posx=(-x_diff), posy=(-y_diff), posz=(-z_diff)) 
 
 def main():
     try:

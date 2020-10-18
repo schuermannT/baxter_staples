@@ -183,7 +183,7 @@ def find_staple(arm):
         time.sleep(2)
         staple_success, matches = detector.detect_staple(only_rim)
         if staple_success:
-            approve_matches(arm, matches, deepcopy(arm._current_pose))
+            approve_matches(arm=arm, matches=matches)
     else:
         print("No document detectable. Please rearrange it on the workplate")
 

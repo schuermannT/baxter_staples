@@ -72,22 +72,22 @@ def alter_pose_abs(pose, verbose=False, posx = None, posy = None, posz = None, o
         return workpose
 
 def alter_pose_inc(pose, verbose=False, posx = 0.0, posy = 0.0, posz = 0.0, orx = 0.0, ory = 0.0, orz = 0.0, orw = 0.0):
-        """
-        Adds the given parameter modifiers to the given poses parameters.
+    """
+    Adds the given parameter modifiers to the given poses parameters.
 
-            Parameter:
-                pose:       The pose to be modified
-                verbose:    True -> print verbose information; False -> dont print verbose information; Default: False
-                posx:       The value for the positions x-value to be modified; Default: None
-                posy:       The value for the positions y-value to be modified; Default: None
-                posz:       The value for the positions z-value to be modified; Default: None
-                orx:        The value for the orientations x-value to be modified; Default: None
-                ory:        The value for the orientations y-value to be modified; Default: None
-                orz:        The value for the orientations z-value to be modified; Default: None
-                orw:        The value for the orientations w-value to be modified; Default: None
-            Return:
-                workpose:   The modified pose
-        """
+        Parameter:
+            pose:       The pose to be modified
+            verbose:    True -> print verbose information; False -> dont print verbose information; Default: False
+            posx:       The value for the positions x-value to be modified; Default: None
+            posy:       The value for the positions y-value to be modified; Default: None
+            posz:       The value for the positions z-value to be modified; Default: None
+            orx:        The value for the orientations x-value to be modified; Default: None
+            ory:        The value for the orientations y-value to be modified; Default: None
+            orz:        The value for the orientations z-value to be modified; Default: None
+            orw:        The value for the orientations w-value to be modified; Default: None
+        Return:
+            workpose:   The modified pose
+    """
     if verbose:
         print("--- func: alter_pose_inc ---")
         print("posx={} posy={} posz={} orx={} ory={} orz={} orw={}").format(posx, posy, posz, orx, ory, orz, orw) 
@@ -250,15 +250,15 @@ class Arm(object):
         time.sleep(1)   #to make sure he really finished his movement and reached the pose
 
     def move_to_pose(self, pose):
-    """
-    Calculates and executes a joint solution for the given pose.
+        """
+        Calculates and executes a joint solution for the given pose.
 
-        Parameters:
-           pose:        The pose to be reached by the endpoint effector.
-        Return:
-            False ->    No valid joint solution could be found for the given pose
-            True ->     The arm reached the given pose
-    """
+            Parameters:
+            pose:        The pose to be reached by the endpoint effector.
+            Return:
+                False ->    No valid joint solution could be found for the given pose
+                True ->     The arm reached the given pose
+        """
         if self._verbose: 
             print("--- func: get_solution ---")
             print("--- pose: ---")
@@ -304,19 +304,19 @@ class Arm(object):
         return False
 
     def move_precise(self, pose):
-    """
-    Calculates and executes a joint solution for the given pose in a more precise way.
+        """
+        Calculates and executes a joint solution for the given pose in a more precise way.
 
-    Approaches the given pose in three steps to provide a more precise positioning. 
-    The first step is offset by 2cm negative in x after which the arm approaches the given pose with one intermediate step.
-    For more thorough information on this method please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann"
+        Approaches the given pose in three steps to provide a more precise positioning. 
+        The first step is offset by 2cm negative in x after which the arm approaches the given pose with one intermediate step.
+        For more thorough information on this method please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann"
 
-        Parameters:
-           pose:        The pose to be reached by the endpoint effector.
-        Return:
-            False ->    No valid joint solution could be found for the given pose
-            True ->     The arm reached the given pose
-    """
+            Parameters:
+            pose:        The pose to be reached by the endpoint effector.
+            Return:
+                False ->    No valid joint solution could be found for the given pose
+                True ->     The arm reached the given pose
+        """
         if self._verbose:
             print("moving {}_arm more precise...").format(self._limb_name)
         if not self.move_to_pose(alter_pose_inc(deepcopy(pose), self._verbose, posx=-0.02)):
@@ -330,18 +330,18 @@ class Arm(object):
         return True
 
     def move_direct(self, pose, precise=False):
-    """
-    Calculates and executes a joint solution for the given pose alongside the axes.
+        """
+        Calculates and executes a joint solution for the given pose alongside the axes.
 
-    Moves alongside the axes in multiple steps. The movement is executed in following sequence: x-axis, y-axis, z-axis
-    Use this function if the workspace is obstructed by possible obstacles and you need a more linear movement.
-        Parameters:
-           pose:        The pose to be reached by the endpoint effector.
-           precise:     Flag to determine if the given pose shall be approached in a more precise manner (for more information see move_precise()); Default: False
-        Return:
-            False ->    No valid joint solution could be found for the given pose
-            True ->     The arm reached the given pose
-    """
+        Moves alongside the axes in multiple steps. The movement is executed in following sequence: x-axis, y-axis, z-axis
+        Use this function if the workspace is obstructed by possible obstacles and you need a more linear movement.
+            Parameters:
+            pose:        The pose to be reached by the endpoint effector.
+            precise:     Flag to determine if the given pose shall be approached in a more precise manner (for more information see move_precise()); Default: False
+            Return:
+                False ->    No valid joint solution could be found for the given pose
+                True ->     The arm reached the given pose
+        """
         if self._verbose:
             print("moving {}_arm on kind of linear way".format(self._limb_name))
         big_move = True
@@ -393,34 +393,34 @@ class Arm(object):
             
 
     def set_neutral(self, open_gripper=True):
-    """
-    Moves the arm to a neutral pose.
+        """
+        Moves the arm to a neutral pose.
 
-        Parameters:
-           open_gripper: Flag to determine if the gripper shall be opened after reaching the neutral pose
-    """
+            Parameters:
+            open_gripper: Flag to determine if the gripper shall be opened after reaching the neutral pose
+        """
         self._limb.move_to_neutral()
         if open_gripper:
             self._gripper.open()
         self._current_pose = convert_to_pose(self._limb.endpoint_pose())
 
     def pick(self, pick_pose, remove_staple=False, remove_clip=False, opening=0.0, hover_distance=0.1):
-    """
-    Performs a classic "pick" movement.
+        """
+        Performs a classic "pick" movement.
 
-    Approaches the given pose from a heightened pose, closes the gripper and retreats to a heightened pose. 
-    With the optional flag parameters slightly different movements can be performed to remove staples or clippers from documents.
+        Approaches the given pose from a heightened pose, closes the gripper and retreats to a heightened pose. 
+        With the optional flag parameters slightly different movements can be performed to remove staples or clippers from documents.
 
-        Parameters:
-           pick_pose:       Pose at which the gripper shall be closed to perform the picking
-           remove_staple:   Flag to determine if a special movement shall be executed for removing staples from documents; Default: False
-           remove_clip:     Flag to determine if a special movement shall be executed for removing clips from documents; Default: False
-           opening:         Percentage of opening for the gripper. 0.0 -> closed, 100.0 -> open; Default: 0.0
-           hover_distance:  Distance between the heightened pose and the pick_pose; Default: 0.1
-        Return:
-            False ->    No valid joint solution could be found for the given pose
-            True ->     The arm reached the given pose
-    """
+            Parameters:
+            pick_pose:       Pose at which the gripper shall be closed to perform the picking
+            remove_staple:   Flag to determine if a special movement shall be executed for removing staples from documents; Default: False
+            remove_clip:     Flag to determine if a special movement shall be executed for removing clips from documents; Default: False
+            opening:         Percentage of opening for the gripper. 0.0 -> closed, 100.0 -> open; Default: 0.0
+            hover_distance:  Distance between the heightened pose and the pick_pose; Default: 0.1
+            Return:
+                False ->    No valid joint solution could be found for the given pose
+                True ->     The arm reached the given pose
+        """
         if self._verbose: 
             print("--- func: pick ---")
             print("--- given pose: ---")
@@ -482,19 +482,19 @@ class Arm(object):
             return False
 
     def place(self, place_pose, opening=100.0, hover_distance=0.1):
-    """
-    Performs a classic "place" movement.
+        """
+        Performs a classic "place" movement.
 
-    Approaches the given pose from a heightened pose, opens the gripper and retreats to a heightened pose. 
+        Approaches the given pose from a heightened pose, opens the gripper and retreats to a heightened pose. 
 
-        Parameters:
-           place_pose:      Pose at which the gripper shall be opened to perform the placing
-           opening:         Percentage of opening for the gripper. 0.0 -> closed, 100.0 -> open; Default: 100.0
-           hover_distance:  Distance between the heightened pose and the pick_pose; Default: 0.1
-        Return:
-            False ->    No valid joint solution could be found for the given pose
-            True ->     The arm reached the given pose    
-    """
+            Parameters:
+            place_pose:      Pose at which the gripper shall be opened to perform the placing
+            opening:         Percentage of opening for the gripper. 0.0 -> closed, 100.0 -> open; Default: 100.0
+            hover_distance:  Distance between the heightened pose and the pick_pose; Default: 0.1
+            Return:
+                False ->    No valid joint solution could be found for the given pose
+                True ->     The arm reached the given pose    
+        """
         if self._verbose: 
             print("--- func: place ---")
             print("--- given pose: ---")
@@ -535,10 +535,10 @@ class Arm(object):
         For this method to function please provide a proper workspace as described in "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann"
         as all executed movements are hardcoded.
 
-        Return:
-            False ->    No valid joint solution could be found for the given pose
-            True ->     The arm reached the given pose 
-    """
+            Return:
+                False ->    No valid joint solution could be found for the given pose
+                True ->     The arm reached the given pose 
+        """
         if self._verbose:
             print("--- func: place_paper ---")
         place_paper_pose = convert_to_pose(const_lib.place_paper_pose)
@@ -592,13 +592,13 @@ class Arm(object):
             return False
 
     def take_tool(self):
-    """
-    Picks up the tool from a hardcoded position.
+        """
+        Picks up the tool from a hardcoded position.
 
-    Return:
-            False ->    No valid joint solution could be found for the given pose
-            True ->     The arm reached the given pose
-    """
+            Return:
+                    False ->    No valid joint solution could be found for the given pose
+                    True ->     The arm reached the given pose
+        """
         if not self._gripper._type is 'electric':
             print("The tool can only be used with an electric gripper\nThe currently used gripper of {}_arm is {}").format(self._limb_name, self._gripper._type)
             return False
@@ -609,13 +609,13 @@ class Arm(object):
         return True
 
     def store_tool(self):
-    """
-    Places the tool at a hardcoded position.
+        """
+        Places the tool at a hardcoded position.
 
-    Return:
-            False ->    No valid joint solution could be found for the given pose
-            True ->     The arm reached the given pose
-    """
+            Return:
+                    False ->    No valid joint solution could be found for the given pose
+                    True ->     The arm reached the given pose
+        """
         self._gripper.command_position(const_lib.gripper_opening)
         tool_pose = convert_to_pose(const_lib.tool_pose)
         alter_pose_inc(tool_pose, verbose=self._verbose, posx=-0.002, posy=-0.002, posz=0.03)
@@ -626,14 +626,14 @@ class Arm(object):
         return True
 
     def simple_failsafe(self, open_gripper=True):
-    """
-    Moves the arm to a neutral pose and disables the robot afterwards.
+        """
+        Moves the arm to a neutral pose and disables the robot afterwards.
 
-    For setting both arms neutral please use the global function failsafe().
+        For setting both arms neutral please use the global function failsafe().
 
-        Parameters:
-           open_gripper: Flag to determine if the gripper shall be opened after reaching a neutral pose    
-    """
+            Parameters:
+            open_gripper: Flag to determine if the gripper shall be opened after reaching a neutral pose    
+        """
         print("Exit routine started \nShutting down arm in neutral pose")
         self.set_neutral(open_gripper)
         self._rs.disable()

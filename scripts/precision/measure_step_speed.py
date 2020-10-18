@@ -14,6 +14,7 @@ import time
 
 import rospy
 
+sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
 import arm_class
 
 from copy import deepcopy
