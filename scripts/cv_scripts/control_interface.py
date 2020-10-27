@@ -4,10 +4,7 @@ import argparse
 import sys
 import time
 import rospy
-import numpy
 import cv2 as cv
-from cv_bridge import CvBridge, CvBridgeError
-from sensor_msgs.msg import Image
 from copy import deepcopy
 from geometry_msgs.msg import (
     Pose,
@@ -17,7 +14,6 @@ from geometry_msgs.msg import (
 
 sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
 import arm_class
-import cam_class
 
 import detector
 import baxter_interface
@@ -78,7 +74,7 @@ def mark_staple(arm, box_cnt):
     print("marking staple")
     arm.cam.set_highlight(detector.draw_cnt_on_img(box_cnt, arm.cam._snapshot))
     time.sleep(2)
-    point_distance = detector.distance_to_point(box_cnt[0], arm.cam.gripper_action_point(), arm._current_pose.position.z)
+    point_distance = detector.distance_to_point(box_cnt[0])
     markingpose = arm_class.alter_pose_inc(arm._current_pose, posx=point_distance[0], posy=point_distance[1])
     markingpose = arm_class.alter_pose_abs(markingpose, arm._verbose, posz=marking_height)
     print("current pose:\n{}\nmarkingpose:\n{}\n".format(arm._current_pose, markingpose))
@@ -107,7 +103,7 @@ def approve_matches(arm, matches):
     for m in matches:
         arm.cam.set_highlight(detector.draw_cnt_on_img(m[1], contour_img))
         time.sleep(1)
-        staple_distance = detector.distance_to_point(m[1][0], arm.cam.get_action_point(), arm._current_pose.position.z)
+        staple_distance = arm.cam.distance_to_point(m[1][0])
         prove_poses.append(arm_class.alter_pose_inc(arm._current_pose, posx=staple_distance[0], posy=staple_distance[1]+0.01))
     for p in prove_poses:
         if not arm.move_to_pose(arm_class.alter_pose_abs(p, arm._verbose, posz=approvement_height + 0.1)):

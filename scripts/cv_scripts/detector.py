@@ -148,7 +148,7 @@ def find_match(img, comparator, maxL=1280.0, minL=0.0, verbose=False):
     i = 0
     for c in contours:
         work_mask = create_box_mask(c, img.shape)
-        match = cv.matchShapes(comparator, work_mask, 1, 0.0)
+        match = cv.matchShapes(comparator, work_mask, 2, 0.0)
         arcL = cv.arcLength(create_box_contour(c), True)
         if arcL < maxL and arcL > minL and match < best_match:
             i+=1
@@ -174,7 +174,7 @@ def sortkey_first(x):
 
 def find_matches(img, comparator, maxL=1280.0, minL=0.0, deviation_thresh=0.15, verbose=False):
     """
-    Extracts all contours from the given image and returns all found matches with a deviation lower than 15% as a sorted list.
+    Extracts all contours from the given image and returns all found matches with a deviation lower than 0.15 as a sorted list.
 
     img and comparator must have the same resolution.
     
@@ -183,7 +183,7 @@ def find_matches(img, comparator, maxL=1280.0, minL=0.0, deviation_thresh=0.15, 
             comparator:         Mask which resembles the box contour to be found
             maxL:               Maximal mainlength of the box contour to be found; Default: 1280.0
             minL:               Minimal mainlength of the box contour to be found; Default: 0.0
-            deviation_thresh:   Maximal deviation of found contour to comparator; Default: 0.15 -> 15%
+            deviation_thresh:   Maximal deviation of found contour to comparator; Default: 0.15
             verbose:            Flag to print messages for debugging
         Return:
             True/False:         Whether one or more matches were found or not
@@ -196,7 +196,7 @@ def find_matches(img, comparator, maxL=1280.0, minL=0.0, deviation_thresh=0.15, 
     best_matches = list()
     for c in contours:
         work_mask = create_box_mask(c, img.shape)
-        match = cv.matchShapes(comparator, work_mask, 1, 0.0)
+        match = cv.matchShapes(comparator, work_mask, 2, 0.0)
         arcL = cv.arcLength(create_box_contour(c), True)
         if arcL < maxL and arcL > minL and match < deviation_thresh:
             if verbose:
@@ -316,24 +316,6 @@ def mask_window(img, gripper_action_point):
     cv.rectangle(mask, (gripper_action_point[0]-field, gripper_action_point[1]+field), (gripper_action_point[0]+field, gripper_action_point[1]-10), 255, -1)
     masked_img = cv.bitwise_and(img, mask)
     return masked_img
-
-def distance_to_point(point, gripper_action_point, arm_z):
-    """
-    Calculates the distance between the action point and a given point in meter and split into x and y.
-
-    For more information on the used formula please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann".
-    
-        Parameters:
-            img:                    Image to be masked
-            gripper_action_point:   Action point of the used end effector
-            arm_z:                  Current z value of the used end effector
-        Return:
-            distance:               Calculated distance in format: (x, y)
-    """
-    factor = -9530.9 * arm_z + 1949.7
-    distance_x = (point[0] - gripper_action_point[0]) / factor
-    distance_y = (-(point[1] - gripper_action_point[1]) / factor) - 0.004
-    return (distance_x, distance_y)
 
 def draw_cnt_on_img(cnt, img):
     """

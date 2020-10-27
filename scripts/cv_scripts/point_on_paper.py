@@ -26,7 +26,7 @@ from geometry_msgs.msg import (
 
 sys.path.append("/home/user/schuermann_BA/ros_ws/src/baxter_staples/scripts/base_classes")
 import arm_class
-import cam_class
+
 import baxter_interface
 
 
@@ -68,7 +68,6 @@ def main():
     rospy.init_node("pen_and_paper", anonymous = True)
     time.sleep(0.5)
     print("Init started...")
-    #cam = cam_class.Cam(args.limb, args.verbose)
     arm = arm_class.Arm(args.limb, args.verbose, True)
     print("Init finished...")
 

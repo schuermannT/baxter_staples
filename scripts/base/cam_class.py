@@ -97,6 +97,25 @@ class Cam(object):
             display_x -= 280
         return (int(display_x),int(display_y))
 
+    def distance_to_point(self, point):
+    """
+    Calculates the distance between the action point and a given point in meter and split into x and y.
+
+    For more information on the used formula please see "Metallentfernung an Dokumenten durch den Forschungsroboter Baxter" by "Timo Schürmann".
+    
+        Parameters:
+            img:                    Image to be masked
+            gripper_action_point:   Action point of the used end effector
+            arm_z:                  Current z value of the used end effector
+        Return:
+            distance:               Calculated distance in format: (x, y)
+    """
+    factor = -9530.9 * self.arm_z + 1949.7
+    gripper_action_point = self.get_action_point()
+    distance_x = (point[0] - gripper_action_point[0]) / factor
+    distance_y = (-(point[1] - gripper_action_point[1]) / factor) - 0.004
+    return (distance_x, distance_y)
+
     def update_z(self, z):
         """
         Saves the given z value for the calculation of the action point.
