@@ -110,11 +110,11 @@ class Cam(object):
         Return:
             distance:               Calculated distance in format: (x, y)
     """
-    factor = -9530.9 * self.arm_z + 1949.7
-    gripper_action_point = self.get_action_point()
-    distance_x = (point[0] - gripper_action_point[0]) / factor
-    distance_y = (-(point[1] - gripper_action_point[1]) / factor) - 0.004
-    return (distance_x, distance_y)
+        factor = -9530.9 * self.arm_z + 1949.7
+        gripper_action_point = self.get_action_point()
+        distance_x = (point[0] - gripper_action_point[0]) / factor
+        distance_y = (-(point[1] - gripper_action_point[1]) / factor) - 0.004
+        return (distance_x, distance_y)
 
     def update_z(self, z):
         """

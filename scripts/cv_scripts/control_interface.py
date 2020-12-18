@@ -74,7 +74,7 @@ def mark_staple(arm, box_cnt):
     print("marking staple")
     arm.cam.set_highlight(detector.draw_cnt_on_img(box_cnt, arm.cam._snapshot))
     time.sleep(2)
-    point_distance = detector.distance_to_point(box_cnt[0])
+    point_distance = arm.cam.distance_to_point(box_cnt[0])
     markingpose = arm_class.alter_pose_inc(arm._current_pose, posx=point_distance[0], posy=point_distance[1])
     markingpose = arm_class.alter_pose_abs(markingpose, arm._verbose, posz=marking_height)
     print("current pose:\n{}\nmarkingpose:\n{}\n".format(arm._current_pose, markingpose))
